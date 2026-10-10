@@ -355,7 +355,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 **Explain it in 2 minutes:** why hybrid beat (or didn't beat) dense on tickers and numbers; how you built the eval set; chunking decisions; cost/latency of reranking.
 
-**Docs if stuck:** [pgvector](https://github.com/pgvector/pgvector) · [PostgreSQL full-text search](https://www.postgresql.org/docs/current/textsearch.html) · [Sentence Transformers](https://sbert.net/)
+**Docs if stuck:** [pgvector](https://github.com/pgvector/pgvector) · [PostgreSQL full-text search](https://www.postgresql.org/docs/current/textsearch.html) · [Sentence Transformers](https://github.com/UKPLab/sentence-transformers)
 
 > ### ✅ Checkpoint: first usable version (~38h)
 > Integrations, a hand-written agent, MCP, and measured RAG on real financial data: the core of the product works end to end. Make sure the README explains it in 30 seconds and take a short break before the next half.
@@ -391,7 +391,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 **Explain it in 2 minutes:** how backend and frontend stay in sync (generated types); how streaming works end to end; how per-client config flows from the UI into the agent.
 
-**Docs if stuck:** [React](https://react.dev/) · [Vite](https://vite.dev/) · [TypeScript](https://www.typescriptlang.org/docs/) · [TanStack Query](https://tanstack.com/query/latest) · [openapi-typescript](https://openapi-ts.dev/) · [Tailwind CSS](https://tailwindcss.com/docs) · [Vitest](https://vitest.dev/)
+**Docs if stuck:** [React](https://react.dev/) · [Vite](https://vite.dev/) · [TypeScript](https://www.typescriptlang.org/docs/) · [TanStack Query](https://tanstack.com/query/latest) · [openapi-typescript](https://github.com/openapi-ts/openapi-typescript) · [Tailwind CSS](https://tailwindcss.com/docs) · [Vitest](https://vitest.dev/)
 
 ---
 
