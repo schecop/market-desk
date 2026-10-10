@@ -260,7 +260,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 **Tasks:**
 - [x] `backend/pyproject.toml` with uv; `src/market_desk/` package; FastAPI app with `/health`
-- [ ] `docker-compose.yml` with `pgvector/pgvector` Postgres; `/health` checks the DB connection
+- [x] `docker-compose.yml` with `pgvector/pgvector` Postgres; `/health` checks the DB connection
 - [ ] SQLAlchemy session + Alembic initialised (first empty migration)
 - [ ] ruff + mypy + pytest configured in `pyproject.toml`; pre-commit hooks
 - [ ] `Makefile`: `up`, `down`, `test`, `lint`, `fmt`

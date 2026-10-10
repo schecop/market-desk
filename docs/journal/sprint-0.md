@@ -1,6 +1,6 @@
 # Sprint 0 — Scaffold
 
-**Dates:** 2026-10-10 → · **Hours:** ~0.5h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-4h)
+**Dates:** 2026-10-10 → · **Hours:** ~1h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-4h)
 
 ## Goal (in my own words)
 A clean, professional skeleton every later sprint builds on: an installable Python package, a FastAPI service backed by Postgres in Docker, automated lint/type/test checks, and CI on every PR. Everything later depends on it.
@@ -13,6 +13,12 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | 2026-10-10 | uv with `uv init --package` and a `src/` layout; Python pinned to 3.12 | One tool for Python version, venv, deps and lockfile; `--package` makes the code an installable package so tests import it like a user would | Poetry; pip + venv + requirements.txt; flat layout | — (in stack table) |
 | 2026-10-10 | `pytest` + `httpx2` as a dev dependency group, not runtime deps | Test-only tools shouldn't ship in the production image; Starlette's TestClient now expects `httpx2` | Put them in `dependencies`; keep `httpx` and live with the deprecation warning | — |
 | 2026-10-10 | App lives in `market_desk/api/main.py`, not the package root | Matches the repo layout in PLAN section 7: `api/` is one layer next to `clients/`, `agent/`, etc. | Single `main.py` at package root | — |
+| 2026-10-10 | `.gitattributes` with `eol=lf` | Code runs on Linux (Docker, CI, AWS); CRLF breaks shell scripts and Makefiles; per-repo file beats each machine's `core.autocrlf` | Rely on everyone's git config | — |
+| 2026-10-10 | Compose runs only `db` for now; API runs with `uv run uvicorn` | Fast reload, debugger works; API container comes with the Dockerfile | API service in compose now | — |
+| 2026-10-10 | SQLAlchemy engine + psycopg 3 already in task 2 | `/health` shares the app's engine and pool; no throwaway raw-driver code | Raw `psycopg.connect()` in `/health`; asyncpg + async engine | — |
+| 2026-10-10 | Sync (not async) DB access | Simpler to learn and debug; FastAPI runs sync handlers in a threadpool, plenty for this load | Async SQLAlchemy + asyncpg (revisit if voice/streaming needs it) | — |
+| 2026-10-10 | `/health` returns 503 when DB is down | Load balancers and orchestrators route on status codes, not JSON bodies | Always 200 with a status field | — |
+| 2026-10-10 | DB-up test uses the real Postgres, not a mock | Mocking the DB would test nothing; CI gets Postgres as a service container | Mock `database_is_reachable`; skip test when DB absent (hides failures) | — |
 
 ## Concepts
 **`pyproject.toml`**: the one standard file (PEP 621) that describes a Python project. `[project]` holds metadata and *runtime* dependencies (what the app needs to run). `[dependency-groups]` holds *dev-only* groups (tests, linters) that never get installed in production. `[build-system]` says which tool turns the source into an installable package (here `uv_build`).
@@ -31,7 +37,19 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 
 **`TestClient`**: calls the app *in-process*: no server, no port, no network. It's fast and deterministic, and it's what lets CI test endpoints without starting uvicorn.
 
-**Liveness vs readiness**: a liveness check answers "is the process alive?"; a readiness check answers "can it actually serve requests (DB reachable, etc.)?". `/health` is liveness only for now; task 2 adds the DB check.
+**Liveness vs readiness**: a liveness check answers "is the process alive?"; a readiness check answers "can it actually serve requests (DB reachable, etc.)?". Since task 2, `/health` is a readiness check: 200 when Postgres answers `SELECT 1`, **503** when it doesn't, so a load balancer (Sprint 7) stops routing traffic to an instance that can't serve it.
+
+**Docker Compose basics**: `docker-compose.yml` declares services. `image` = what to run; `environment` = config the image reads on first start (creates user/db); `ports: "5432:5432"` = host:container; a **named volume** (`pgdata`) keeps data when the container is removed (`docker compose down` keeps it, `down -v` deletes it); `healthcheck` lets Docker (and later CI) know when Postgres is actually ready, not just started.
+
+**Engine and connection pool**: `create_engine()` doesn't connect; it creates a *pool* that opens connections lazily and reuses them, because opening a Postgres connection is slow (TCP + auth). Create it **once** per process (`@lru_cache` on `get_engine`). `pool_pre_ping=True` checks a pooled connection before handing it out, so after a DB restart the app recovers by itself instead of failing on a dead connection. `connect_timeout` makes a down DB fail in seconds instead of hanging.
+
+**Database URL anatomy**: `postgresql+psycopg://user:password@host:port/dbname`. The `+psycopg` part picks the *driver* SQLAlchemy uses (psycopg 3).
+
+**pydantic-settings**: a `BaseSettings` class reads each field from an env var of the same name (case-insensitive: `database_url` ← `DATABASE_URL`), then from `.env`, then the default. Real env vars win, which is how Docker/AWS will inject config. Types are validated at startup, so bad config fails immediately.
+
+**FastAPI dependency injection**: `engine: Annotated[Engine, Depends(get_engine)]` tells FastAPI to call `get_engine()` and pass the result in. The handler doesn't know where the engine comes from, so tests can swap it: `app.dependency_overrides[get_engine] = lambda: other_engine`. Always clear overrides after the test so they don't leak.
+
+**pytest fixtures**: a function decorated with `@pytest.fixture` that tests request by parameter name. Code before `yield` is setup, after `yield` is teardown (runs even if the test fails).
 
 ## Code map
 | File | What it does | Why it exists / why this way |
@@ -43,14 +61,20 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | `backend/pyproject.toml` | Project metadata, runtime deps, dev group, build backend | Single source for deps and (soon) tool config |
 | `backend/uv.lock` | Exact pinned versions of every dependency | Reproducible installs locally, in CI and in Docker |
 | `backend/.python-version` | Pins Python 3.12 for uv | Everyone (and CI) runs the same interpreter |
-| `backend/src/market_desk/api/main.py` | FastAPI `app` + `GET /health` | Entry point uvicorn serves; home of all routers later |
-| `backend/tests/test_health.py` | In-process test of `/health` | First test; template for endpoint tests |
+| `backend/src/market_desk/api/main.py` | FastAPI `app` + `GET /health` (readiness, uses DB) | Entry point uvicorn serves; home of all routers later |
+| `backend/tests/test_health.py` | Tests `/health` with DB up (real Postgres) and down (overridden engine) | Covers both branches; shows the dependency-override pattern |
+| `.gitattributes` | Forces LF line endings for every clone | Linux-bound code must not get CRLF |
+| `docker-compose.yml` | Local Postgres 16 + pgvector with volume and healthcheck | Same DB locally as in CI and (RDS) in AWS |
+| `backend/src/market_desk/config.py` | `Settings` (env vars / `.env`) + cached `get_settings()` | One typed place for all config; secrets stay out of code |
+| `backend/src/market_desk/db/engine.py` | Cached SQLAlchemy engine + `database_is_reachable()` | One connection pool per process; health logic testable on its own |
 
 ## Gotchas and bugs
 | Symptom | Cause | Fix | Lesson |
 |---|---|---|---|
 | `StarletteDeprecationWarning: Using httpx with starlette.testclient is deprecated` | Recent Starlette moved its TestClient to the `httpx2` package | `uv remove --dev httpx && uv add --dev httpx2` | Read warnings: they tell you about upcoming breakage. `httpx` itself is still what we'll use for API clients in Sprint 1 |
 | `uv`/`gh` "command not found" right after installing | The terminal was opened before the install changed PATH | Open a new terminal | PATH is read when a shell starts |
+| "LF will be replaced by CRLF" warnings on `git add` | `core.autocrlf=true` (Git for Windows default) converts line endings in the working copy | `.gitattributes` with `* text=auto eol=lf` | Line endings are a repo setting, not a personal one |
+| (avoided) `.env` at repo root ignored when running from `backend/` | `env_file` paths are relative to the current directory | `env_file=("../.env", ".env")` | Relative paths resolve from where you *run*, not where the file lives |
 
 ## Commands and snippets worth keeping
 ```bash
@@ -59,6 +83,12 @@ uv sync                                              # create .venv from uv.lock
 uv add <pkg> / uv add --dev <pkg>                    # add runtime / dev dependency
 uv run pytest -q                                     # run tests inside the venv
 uv run uvicorn market_desk.api.main:app --reload     # dev server on :8000, docs at /docs
+
+docker compose up -d                                 # start Postgres (from repo root)
+docker compose ps                                    # status + health
+docker compose exec db psql -U market_desk           # SQL shell inside the container
+docker compose stop db / start db                    # simulate an outage
+docker compose down        # remove containers, keep data;  down -v also deletes the volume
 ```
 
 ## Open questions
