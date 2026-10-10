@@ -36,19 +36,32 @@
 3. Bring the environment up (once Sprint 0 exists): `docker compose up -d` then `make test`. If tests are red, fixing them is the first task.
 4. Work on **one checkbox at a time**, on a branch, ending in a PR.
 
-### End of every session (5 minutes)
+### End of every session (5-10 minutes)
 1. Tick the boxes you finished in this file.
-2. Add a `PROGRESS.md` entry: date, what you did, **the exact next step**, blockers, hours spent.
-3. Commit and push. **Never leave `main` with red CI.**
+2. Update the sprint journal (`docs/journal/sprint-N.md`): decisions, concepts, code map, gotchas from this session.
+3. Add a `PROGRESS.md` entry: date, what you did, what you learned, **the exact next step**, blockers, hours spent.
+4. Commit and push. **Never leave `main` with red CI.**
+
+### Learning first: the trace you keep
+This is a hands-on learning project, so understanding matters more than speed. For every action you should know **what** is being done, **why**, and **which code** results, and be able to look it up later:
+
+| Record | Where |
+|---|---|
+| Where we are, next step, what I learned this session | `PROGRESS.md` |
+| Decisions (with alternatives), concepts, code map, bugs | `docs/journal/sprint-N.md` |
+| Lasting architectural decisions | `docs/adr/` |
+| Why each change was made | commit bodies and PR descriptions (`.github/pull_request_template.md`) |
+
+`CLAUDE.md` enforces this for Claude Code sessions: explain before acting, walk through every change afterwards (boilerplate included), one task at a time, short understanding checks on core pieces, and journal entries as you go.
 
 ### Restarting after a long break
 Re-read Sections 2-4 (why, what, how it fits together), then follow "Start of every session". The "Background" block in each sprint explains its concepts from scratch.
 
 ### Working with Claude Code
-`CLAUDE.md` at the repo root tells any Claude Code session how to behave here. In short: Claude may generate boilerplate, config and scaffolding, but for the **core pieces** (API clients, the agent loop, retrieval, eval logic) it acts as a **tutor and reviewer**. You write them, and you must be able to explain every line.
+`CLAUDE.md` at the repo root tells any Claude Code session how to behave here. In short: Claude may generate boilerplate, config and scaffolding (always explained before and after), but for the **core pieces** (API clients, the agent loop, retrieval, voice pipeline, eval logic) it acts as a **tutor and reviewer**. You write them, and you must be able to explain every line.
 
 ### Changing the plan
-Plans change. When you change a technology or a sprint, write a short ADR in `docs/adr/` (copy `0000-template.md`), then update Sections 5 and 8 here. The plan should always describe reality.
+Plans change. When you change a technology or a sprint (or make any lasting architectural decision), write a short ADR in `docs/adr/` (copy `0000-template.md`), then update Sections 5 and 8 here. The plan should always describe reality.
 
 ---
 
@@ -204,8 +217,12 @@ market-desk/
 ├── frontend/                Vite + React + TS app
 ├── evals/                   question sets, runners, results
 ├── infra/terraform/         AWS stack
+├── .github/
+│   ├── workflows/           CI/CD
+│   └── pull_request_template.md   what / why / how / decisions / learned / verified
 └── docs/
     ├── PLAN.md              this file
+    ├── journal/             learning trace, one file per sprint
     └── adr/                 architecture decision records
 ```
 
