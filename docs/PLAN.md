@@ -259,7 +259,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 **Tech:** uv, FastAPI, Postgres 16 + pgvector image, Docker Compose, ruff, mypy, pytest, pre-commit, GitHub Actions.
 
 **Tasks:**
-- [ ] `backend/pyproject.toml` with uv; `src/market_desk/` package; FastAPI app with `/health`
+- [x] `backend/pyproject.toml` with uv; `src/market_desk/` package; FastAPI app with `/health`
 - [ ] `docker-compose.yml` with `pgvector/pgvector` Postgres; `/health` checks the DB connection
 - [ ] SQLAlchemy session + Alembic initialised (first empty migration)
 - [ ] ruff + mypy + pytest configured in `pyproject.toml`; pre-commit hooks

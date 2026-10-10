@@ -1,0 +1,22 @@
+[project]
+name = "market-desk"
+version = "0.1.0"
+description = "Multi-client AI research agent for public companies: grounded facts, SEC filings, chat and voice."
+authors = [
+    { name = "Pablo Sala", email = "pablosalafernandez@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.143.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.0,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.13.1",
+    "pytest>=9.1.1",
+]
