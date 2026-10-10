@@ -25,6 +25,11 @@ What this sprint is for and what it teaches.
 |---|---|---|---|
 | | | | |
 
+## Exercises
+| Date | Task (type) | Outcome | What I got wrong | Lesson |
+|---|---|---|---|---|
+| | | | | |
+
 ## Commands and snippets worth keeping
 ```bash
 ```

@@ -76,6 +76,11 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | "LF will be replaced by CRLF" warnings on `git add` | `core.autocrlf=true` (Git for Windows default) converts line endings in the working copy | `.gitattributes` with `* text=auto eol=lf` | Line endings are a repo setting, not a personal one |
 | (avoided) `.env` at repo root ignored when running from `backend/` | `env_file` paths are relative to the current directory | `env_file=("../.env", ".env")` | Relative paths resolve from where you *run*, not where the file lives |
 
+## Exercises
+| Date | Task (type) | Outcome | What I got wrong | Lesson |
+|---|---|---|---|---|
+| | | | | |
+
 ## Commands and snippets worth keeping
 ```bash
 cd backend

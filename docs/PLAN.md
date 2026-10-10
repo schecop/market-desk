@@ -34,13 +34,13 @@
 1. Read the **latest entry in `PROGRESS.md`**: what was done, the next step, blockers.
 2. Open the **current sprint** in Section 8 and find the first unchecked box.
 3. Bring the environment up (once Sprint 0 exists): `docker compose up -d` then `make test`. If tests are red, fixing them is the first task.
-4. Work on **one checkbox at a time**, on a branch, ending in a PR.
+4. Work on **one checkbox at a time**, on a branch, ending in a PR. Each checkbox follows the task lifecycle in `CLAUDE.md`: explain → build → walk-through → check questions → **guided exercise you do yourself** → verify → journal → commit (only when you say so).
 
 ### End of every session (5-10 minutes)
 1. Tick the boxes you finished in this file.
 2. Update the sprint journal (`docs/journal/sprint-N.md`): decisions, concepts, code map, gotchas from this session.
 3. Add a `PROGRESS.md` entry: date, what you did, what you learned, **the exact next step**, blockers, hours spent.
-4. Commit and push. **Never leave `main` with red CI.**
+4. Commit any finished task that is still uncommitted (only once its guided exercise is done), then push. **Never leave `main` with red CI.**
 
 ### Learning first: the trace you keep
 This is a hands-on learning project, so understanding matters more than speed. For every action you should know **what** is being done, **why**, and **which code** results, and be able to look it up later:
@@ -52,7 +52,7 @@ This is a hands-on learning project, so understanding matters more than speed. F
 | Lasting architectural decisions | `docs/adr/` |
 | Why each change was made | commit bodies and PR descriptions (`.github/pull_request_template.md`) |
 
-`CLAUDE.md` enforces this for Claude Code sessions: explain before acting, walk through every change afterwards (boilerplate included), one task at a time, short understanding checks on core pieces, and journal entries as you go.
+`CLAUDE.md` enforces this for Claude Code sessions: explain before acting, walk through every change afterwards (boilerplate included), one task at a time, short understanding checks, a **guided exercise after every task** (complete code, build or extend a feature, fix a bug, write a test), journal entries as you go, and **no commit until the exercise is done and you say so**.
 
 ### Restarting after a long break
 Re-read Sections 2-4 (why, what, how it fits together), then follow "Start of every session". The "Background" block in each sprint explains its concepts from scratch.

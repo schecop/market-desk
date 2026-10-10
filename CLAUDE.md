@@ -14,14 +14,34 @@ This is a learning project first. Pablo must always know what is being done, why
 1. **Explain before acting.** Before writing code, running a non-trivial command or changing config, say in a few lines: what you're about to do, why, the main alternative(s) and why not, and what concept it teaches. For anything beyond a trivial edit, wait for Pablo's go-ahead.
 2. **No silent changes.** After every change, list the files touched and walk through the important lines: what each part does and why it's written that way. Generated boilerplate (Docker, CI, Terraform, config, frontend scaffolding) gets explained too: generated never means unexplained.
 3. **One task at a time.** Small steps Pablo can follow; don't batch unrelated changes.
-4. **Check understanding on core pieces.** After a core piece works, ask Pablo one or two short questions (predict a behaviour, explain an edge case, what breaks if X changes). Keep it brief, not an exam.
-5. **Record as you go**, in `docs/journal/sprint-N.md`:
+4. **Check understanding.** After a piece works, ask Pablo one or two short questions (predict a behaviour, explain an edge case, what breaks if X changes). Keep it brief, not an exam.
+5. **Give a guided exercise.** After the check questions, give Pablo a hands-on task to do himself, tied to what was just built (see "Task lifecycle" below). The task is finished only when he completes it successfully.
+6. **Record as you go**, in `docs/journal/sprint-N.md`:
    - every decision with real alternatives → Decisions log (date, decision, why, alternatives); lasting architectural ones (library, provider, data model, architecture) also get an ADR in `docs/adr/`
    - every new concept → Concepts, written so Pablo can re-read it months later
    - every new or changed file that matters → Code map (file, what it does, why it exists)
    - every bug or surprise → Gotchas (symptom, cause, fix)
-6. **Explain the why in git.** Commit bodies say why, not just what. PRs use `.github/pull_request_template.md` (what, why, how, decisions, learned, verified).
-7. **When a task is finished**, summarise in 3-5 lines: what was built, the key decision, the concept learned, and where it's recorded.
+   - every guided exercise → Exercises (task, outcome, what I got wrong, lesson)
+7. **Never commit on your own.** Changes stay uncommitted until the task lifecycle below is complete and Pablo says to commit, so he can review the whole change (`git status`, `git diff`) first. Then propose the commit message and commit only on his go-ahead. Commit bodies say why, not just what. PRs use `.github/pull_request_template.md` (what, why, how, decisions, learned, verified).
+8. **When a task is finished**, summarise in 3-5 lines: what was built, the key decision, the concept learned, and where it's recorded.
+
+## Task lifecycle (every checkbox in `docs/PLAN.md`)
+1. **Explain** what, why, alternatives, concept. Wait for the go-ahead.
+2. **Build.** Boilerplate: Claude writes it. Core pieces: Pablo writes it, Claude hints and reviews (see Tutor mode).
+3. **Walk through** every file touched and the important lines. Nothing is committed yet.
+4. **Check questions**: one or two, short.
+5. **Guided exercise**: Pablo does it himself (rules below).
+6. **Verify**: tests, ruff and mypy green; Claude reviews Pablo's exercise code and points out issues without rewriting it.
+7. **Record**: journal (decisions, concepts, code map, gotchas, exercise), tick the PLAN checkbox.
+8. **Commit** only when Pablo says so: show `git status`, propose a conventional commit message with a why-body, then commit.
+
+### Guided exercise rules
+- **Types**: complete code left with `TODO` markers; extend or create a small feature; fix a bug (Claude may plant one, but always says so, and it's never committed unfixed); write a missing test; change a config and predict and verify the effect; break something on purpose and diagnose it from the error.
+- **Size**: 10-30 minutes, directly tied to what was just built. Tiny tasks get a small exercise, or two consecutive tiny tasks share one; never skip it silently.
+- **State up front**: the goal, the files involved, and the acceptance criteria: ideally a failing test or a command whose output proves success.
+- **Hints are graduated**: a nudge, then a pointer to the right place or doc, then a near-solution. Only on request. Never give the full solution unless Pablo explicitly asks.
+- **Don't touch his exercise code.** Review it, point out bugs and edge cases, ask questions; he makes the fixes.
+- **Done means** the acceptance criteria pass and Pablo can explain his solution. Then go to Verify.
 
 ## On session start
 1. Read the latest `PROGRESS.md` entry, the current sprint in `docs/PLAN.md`, and the current sprint journal.
@@ -51,4 +71,4 @@ Boilerplate may be generated (config files, Dockerfiles, CI workflows, Terraform
 1. Tick finished checkboxes in `docs/PLAN.md`.
 2. Make sure the sprint journal is up to date (decisions, concepts, code map, gotchas from this session).
 3. Add a `PROGRESS.md` entry using the template at the top of that file.
-4. Remind Pablo to commit and push.
+4. If any finished task is still uncommitted, show `git status` and ask Pablo whether to commit it; then remind him to push.
