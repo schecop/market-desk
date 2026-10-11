@@ -1,6 +1,6 @@
 # Sprint 0 — Scaffold
 
-**Dates:** 2026-10-10 → · **Hours:** ~1h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-4h)
+**Dates:** 2026-10-10 → · **Hours:** ~2h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-4h)
 
 ## Goal (in my own words)
 A clean, professional skeleton every later sprint builds on: an installable Python package, a FastAPI service backed by Postgres in Docker, automated lint/type/test checks, and CI on every PR. Everything later depends on it.
@@ -49,6 +49,14 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 
 **FastAPI dependency injection**: `engine: Annotated[Engine, Depends(get_engine)]` tells FastAPI to call `get_engine()` and pass the result in. The handler doesn't know where the engine comes from, so tests can swap it: `app.dependency_overrides[get_engine] = lambda: other_engine`. Always clear overrides after the test so they don't leak.
 
+**Test isolation**: every test must pass alone and in any order. Anything shared across tests (module-level objects like `app`, function caches like `@lru_cache`, env vars) can carry state from one test into the next, which creates *order-dependent* tests: green or red depending on the order, not the code. Check by running tests in a different order with explicit node IDs: `pytest a.py::test_x b.py::test_y` runs them in that order.
+
+**`monkeypatch`** (built-in pytest fixture): makes temporary changes at runtime (`setenv`, `delenv`, `setattr`) and undoes them all when the test ends, **even if the test fails**. Safer than writing to `os.environ` directly, which leaks into every later test.
+
+**`lru_cache` and tests**: a cached function keeps its result across tests. `get_settings.cache_clear()` empties it; `cache_info()` shows hits and misses. When testing *the thing being cached* (`Settings`), build it directly instead of going through the cache, and there's nothing to clean up.
+
+**`==` vs `is`**: `==` compares values (Pydantic models with equal fields are `==`); `is` checks it's the *same object in memory*. "Is it cached?" is an `is` question.
+
 **pytest fixtures**: a function decorated with `@pytest.fixture` that tests request by parameter name. Code before `yield` is setup, after `yield` is teardown (runs even if the test fails).
 
 ## Code map
@@ -63,6 +71,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | `backend/.python-version` | Pins Python 3.12 for uv | Everyone (and CI) runs the same interpreter |
 | `backend/src/market_desk/api/main.py` | FastAPI `app` + `GET /health` (readiness, uses DB) | Entry point uvicorn serves; home of all routers later |
 | `backend/tests/test_health.py` | Tests `/health` with DB up (real Postgres) and down (overridden engine) | Covers both branches; shows the dependency-override pattern |
+| `backend/tests/test_config.py` | Env var beats default; `get_settings()` caches and `cache_clear()` resets it | My exercise; pins down config behaviour the whole app relies on |
 | `.gitattributes` | Forces LF line endings for every clone | Linux-bound code must not get CRLF |
 | `docker-compose.yml` | Local Postgres 16 + pgvector with volume and healthcheck | Same DB locally as in CI and (RDS) in AWS |
 | `backend/src/market_desk/config.py` | `Settings` (env vars / `.env`) + cached `get_settings()` | One typed place for all config; secrets stay out of code |
@@ -74,12 +83,13 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | `StarletteDeprecationWarning: Using httpx with starlette.testclient is deprecated` | Recent Starlette moved its TestClient to the `httpx2` package | `uv remove --dev httpx && uv add --dev httpx2` | Read warnings: they tell you about upcoming breakage. `httpx` itself is still what we'll use for API clients in Sprint 1 |
 | `uv`/`gh` "command not found" right after installing | The terminal was opened before the install changed PATH | Open a new terminal | PATH is read when a shell starts |
 | "LF will be replaced by CRLF" warnings on `git add` | `core.autocrlf=true` (Git for Windows default) converts line endings in the working copy | `.gitattributes` with `* text=auto eol=lf` | Line endings are a repo setting, not a personal one |
+| Health test fails with `ArgumentError: Could not parse SQLAlchemy URL` only when run after the config test | Config test went through `get_settings()` with a fake `DATABASE_URL`; the cached `Settings` outlived the test (`monkeypatch` restores env vars, not caches) | Build `Settings()` directly in that test; clear the cache at start and end of the caching test | Caches are shared state; check tests in more than one order |
 | (avoided) `.env` at repo root ignored when running from `backend/` | `env_file` paths are relative to the current directory | `env_file=("../.env", ".env")` | Relative paths resolve from where you *run*, not where the file lives |
 
 ## Exercises
 | Date | Task (type) | Outcome | What I got wrong | Lesson |
 |---|---|---|---|---|
-| | | | | |
+| 2026-10-11 | Tasks 1-2. A: remove `dependency_overrides.clear()`, predict and run tests in reverse order (predict/verify). B: write `tests/test_config.py`, env var overrides default + `get_settings()` caching (write a missing test) | Done: 4 tests pass in every order | Didn't know `monkeypatch`; used `get_settings()` where a fresh `Settings()` was needed (order-dependent, then polluted the cache for the health test); used `==` to check "same object"; in A, blamed the fake URL instead of the leaked dependency override | Shared state (app overrides, caches, env) leaks between tests; test the object directly, not through the cache; `is` for identity |
 
 ## Commands and snippets worth keeping
 ```bash
