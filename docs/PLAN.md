@@ -8,9 +8,9 @@
 |---|---|
 | Owner | Pablo Sala |
 | Started | 2026-10-10 |
-| Total effort | ~88h over 9 sprints (Sprint 0-8), about 9 weeks at ~10h/week |
+| Total effort | ~89h over 9 sprints (Sprint 0-8), about 9 weeks at ~10h/week |
 | Budget | up to ~€20-30/month for paid services |
-| Checkpoint | after Sprint 3 (~38h): first usable version |
+| Checkpoint | after Sprint 3 (~39h): first usable version |
 
 ---
 
@@ -234,21 +234,21 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 | # | Sprint | Hours | Main skills |
 |---|---|---|---|
-| 0 | Scaffold | ~4h | SWE practices |
+| 0 | Scaffold | ~5h | SWE practices, containers |
 | 1 | Integrations layer | ~10h | Backend & integrations, n8n |
 | 2 | Agent core | ~12h | Agents outside Claude Code |
 | 3 | RAG with evaluation | ~12h | RAG, financial data |
-| — | **Checkpoint: first usable version** | ~38h total | |
+| — | **Checkpoint: first usable version** | ~39h total | |
 | 4 | React + TypeScript dashboard | ~12h | Full-stack web |
 | 5 | Voice channel | ~12h | Voice agents |
 | 6 | Observability and evals in CI | ~10h | Observability, debugging live agents |
 | 7 | Ship to AWS | ~10h | Containers, deployment, IaC |
 | 8 | Second client, docs and demo | ~6h | Multi-client, docs, communication |
-| | **Total** | **~88h** | |
+| | **Total** | **~89h** | |
 
 ---
 
-### Sprint 0 — Scaffold (~4h)
+### Sprint 0 — Scaffold (~5h)
 
 **Objective:** a clean, professional skeleton that every later sprint builds on.
 
@@ -256,12 +256,13 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 **Background:** a modern Python service has a `pyproject.toml` (dependencies and tool config in one file), a `src/` layout (so tests import the installed package, not loose files), automated lint/format/type checks, and CI that runs them on every PR. Docker Compose runs the database locally exactly as it will run elsewhere.
 
-**Tech:** uv, FastAPI, Postgres 16 + pgvector image, Docker Compose, ruff, mypy, pytest, pre-commit, GitHub Actions.
+**Tech:** uv, FastAPI, Postgres 16 + pgvector image, Docker (multi-stage build), Docker Compose, ruff, mypy, pytest, pre-commit, GitHub Actions.
 
 **Tasks:**
 - [x] `backend/pyproject.toml` with uv; `src/market_desk/` package; FastAPI app with `/health`
 - [x] `docker-compose.yml` with `pgvector/pgvector` Postgres; `/health` checks the DB connection
 - [ ] SQLAlchemy session + Alembic initialised (first empty migration)
+- [ ] Multi-stage `Dockerfile` (uv) for the API + `api` service in `docker-compose.yml`; runs migrations on start ([ADR-0001](adr/0001-containerise-api-in-sprint-0.md))
 - [ ] ruff + mypy + pytest configured in `pyproject.toml`; pre-commit hooks
 - [ ] `Makefile`: `up`, `down`, `test`, `lint`, `fmt`
 - [ ] GitHub Actions: lint + type check + tests on PRs and on `main` (Postgres as a service container)
@@ -298,7 +299,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] `webhooks/`: inbound endpoint verifying an HMAC signature; outbound dispatcher with signing and retries
 - [ ] n8n in Docker Compose; a flow that receives "new 10-K filed for a watchlist company" and posts to Slack
 - [ ] A scheduled check (simple background task) that detects new filings for watchlist companies and fires the outbound webhook
-- [ ] ADR-0001: client design (sync vs async, retry policy)
+- [ ] ADR-0002: client design (sync vs async, retry policy)
 
 **Done when:** a forced 429 is retried and logged instead of crashing, and an n8n flow receives a "new 10-K" event and posts it to Slack.
 
@@ -330,7 +331,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] `POST /chat` endpoint (streaming response) using the loop
 - [ ] Tests: fake LLM responses to test the loop deterministically (tool call → result → answer; tool error; step limit hit)
 - [ ] `agent/graph.py`: the same flow in LangGraph, including an interrupt for confirmation
-- [ ] ADR-0002: hand-written loop vs LangGraph, trade-offs and which one the API uses
+- [ ] ADR-0003: hand-written loop vs LangGraph, trade-offs and which one the API uses
 - [ ] `mcp_server/`: expose `tools/` over MCP; connect it in Claude Desktop or Claude Code next to Cala's MCP server
 
 **Done when:** "Compare the main risks of the companies on my watchlist" runs multi-step with cited tool calls in both implementations, and the MCP server works from a Claude client.
@@ -374,7 +375,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 **Docs if stuck:** [pgvector](https://github.com/pgvector/pgvector) · [PostgreSQL full-text search](https://www.postgresql.org/docs/current/textsearch.html) · [Sentence Transformers](https://github.com/UKPLab/sentence-transformers)
 
-> ### ✅ Checkpoint: first usable version (~38h)
+> ### ✅ Checkpoint: first usable version (~39h)
 > Integrations, a hand-written agent, MCP, and measured RAG on real financial data: the core of the product works end to end. Make sure the README explains it in 30 seconds and take a short break before the next half.
 
 ---
@@ -436,7 +437,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] Custom vocabulary / keyword boosting + entity post-correction; WER after
 - [ ] Voice settings per client (voice, speaking style) from Sprint 4's config
 - [ ] Optional stretch: a phone number (Twilio) routed to the same pipeline
-- [ ] ADR-0003: provider choice and latency findings
+- [ ] ADR-0004: provider choice and latency findings
 
 **Done when:** you can ask out loud for a company's latest revenue and get a spoken, sourced answer, with a measured before/after transcription accuracy on your ticker list.
 
@@ -492,13 +493,13 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 **Tasks:**
 - [ ] AWS Budgets alert at €20 (do this **first**)
-- [ ] Multi-stage Dockerfile for the backend; frontend production build
+- [ ] Harden the backend Dockerfile from Sprint 0 for production (ADR-0001); frontend production build
 - [ ] `infra/terraform/`: VPC basics, ECR, RDS Postgres (smallest instance), ECS Fargate service, S3 + CloudFront, Secrets Manager, CloudWatch logs
 - [ ] Enable pgvector on RDS; run Alembic migrations as a one-off task
 - [ ] GitHub Actions: OIDC role; on merge to `main` build, push and deploy
 - [ ] `make cloud-up` / `make cloud-down` wrapping `terraform apply` / `destroy`
 - [ ] Smoke test after deploy (`/health`, one chat request)
-- [ ] ADR-0004: deployment design and cost per day while up
+- [ ] ADR-0005: deployment design and cost per day while up
 
 **Done when:** merging a PR deploys automatically to a public URL, and `terraform destroy` followed by `terraform apply` rebuilds a working stack.
 

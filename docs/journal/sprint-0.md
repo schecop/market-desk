@@ -19,6 +19,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | 2026-10-10 | Sync (not async) DB access | Simpler to learn and debug; FastAPI runs sync handlers in a threadpool, plenty for this load | Async SQLAlchemy + asyncpg (revisit if voice/streaming needs it) | — |
 | 2026-10-10 | `/health` returns 503 when DB is down | Load balancers and orchestrators route on status codes, not JSON bodies | Always 200 with a status field | — |
 | 2026-10-10 | DB-up test uses the real Postgres, not a mock | Mocking the DB would test nothing; CI gets Postgres as a service container | Mock `database_is_reachable`; skip test when DB absent (hides failures) | — |
+| 2026-10-11 | Dockerfile + `api` Compose service in Sprint 0 (moved forward from Sprint 7), right after Alembic | Makes "Done when" true; container issues surface while the app is tiny; one command starts the whole stack | Keep it in Sprint 7 and reword "Done when" | [ADR-0001](../adr/0001-containerise-api-in-sprint-0.md) |
 
 ## Concepts
 **`pyproject.toml`**: the one standard file (PEP 621) that describes a Python project. `[project]` holds metadata and *runtime* dependencies (what the app needs to run). `[dependency-groups]` holds *dev-only* groups (tests, linters) that never get installed in production. `[build-system]` says which tool turns the source into an installable package (here `uv_build`).
