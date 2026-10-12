@@ -7,6 +7,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.20.0",
     "fastapi>=0.143.0",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.15.0",
@@ -23,3 +24,10 @@ dev = [
     "httpx2>=2.13.1",
     "pytest>=9.1.1",
 ]
+
+
+[tool.alembic]
+# Migrations ship inside the package (src/market_desk/db/migrations), so the Docker image gets them with the code
+script_location = "%(here)s/src/market_desk/db/migrations"
+# Date-prefixed file names keep migrations sorted by creation time in the file explorer
+file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s"
