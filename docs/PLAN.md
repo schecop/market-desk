@@ -8,9 +8,9 @@
 |---|---|
 | Owner | Pablo Sala |
 | Started | 2026-10-10 |
-| Total effort | ~89h over 9 sprints (Sprint 0-8), about 9 weeks at ~10h/week |
+| Total effort | ~90.5h over 9 sprints (Sprint 0-8), about 9 weeks at ~10h/week |
 | Budget | up to ~€20-30/month for paid services |
-| Checkpoint | after Sprint 3 (~39h): first usable version |
+| Checkpoint | after Sprint 3 (~40.5h): first usable version |
 
 ---
 
@@ -154,6 +154,7 @@ One product touches all of this in a realistic way: an agent that real users tal
 | Test mocks | respx | Mock httpx calls so CI never hits live APIs |
 | Quality | pytest, ruff, mypy, pre-commit | Tests, lint/format, types, enforced before commit |
 | CI/CD | GitHub Actions | Free for public repos; OIDC to AWS in Sprint 7 |
+| Journal site | MkDocs Material on GitHub Pages | Searchable learning journal built from the Markdown in `docs/journal/`; free hosting, deployed by GitHub Actions ([ADR-0002](adr/0002-journal-site-mkdocs-github-pages.md)) |
 | LLM | Claude API (`anthropic` SDK): `claude-sonnet-5-5` for the agent, `claude-haiku-5-5` for cheap steps and evals | Strong tool use; Haiku and prompt caching keep cost down |
 | Agent framework | LangGraph (comparison only) | Widely used agent framework; contrast with the hand-written loop |
 | MCP | Official MCP Python SDK | Same tools exposed as an MCP server, like Cala's own |
@@ -201,6 +202,7 @@ market-desk/
 ├── Makefile                 make up / test / lint / eval / fmt
 ├── docker-compose.yml       postgres+pgvector, api, (n8n), (langfuse)
 ├── .env.example
+├── mkdocs.yml               journal site config (MkDocs Material → GitHub Pages)
 ├── backend/
 │   ├── pyproject.toml
 │   ├── src/market_desk/
@@ -222,7 +224,7 @@ market-desk/
 │   └── pull_request_template.md   what / why / how / decisions / learned / verified
 └── docs/
     ├── PLAN.md              this file
-    ├── journal/             learning trace, one file per sprint
+    ├── journal/             learning trace, one page per task (published as the journal site)
     └── adr/                 architecture decision records
 ```
 
@@ -234,21 +236,21 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 | # | Sprint | Hours | Main skills |
 |---|---|---|---|
-| 0 | Scaffold | ~5h | SWE practices, containers |
+| 0 | Scaffold | ~6.5h | SWE practices, containers, docs site |
 | 1 | Integrations layer | ~10h | Backend & integrations, n8n |
 | 2 | Agent core | ~12h | Agents outside Claude Code |
 | 3 | RAG with evaluation | ~12h | RAG, financial data |
-| — | **Checkpoint: first usable version** | ~39h total | |
+| — | **Checkpoint: first usable version** | ~40.5h total | |
 | 4 | React + TypeScript dashboard | ~12h | Full-stack web |
 | 5 | Voice channel | ~12h | Voice agents |
 | 6 | Observability and evals in CI | ~10h | Observability, debugging live agents |
 | 7 | Ship to AWS | ~10h | Containers, deployment, IaC |
 | 8 | Second client, docs and demo | ~6h | Multi-client, docs, communication |
-| | **Total** | **~89h** | |
+| | **Total** | **~90.5h** | |
 
 ---
 
-### Sprint 0 — Scaffold (~5h)
+### Sprint 0 — Scaffold (~6.5h)
 
 **Objective:** a clean, professional skeleton that every later sprint builds on.
 
@@ -256,7 +258,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 **Background:** a modern Python service has a `pyproject.toml` (dependencies and tool config in one file), a `src/` layout (so tests import the installed package, not loose files), automated lint/format/type checks, and CI that runs them on every PR. Docker Compose runs the database locally exactly as it will run elsewhere.
 
-**Tech:** uv, FastAPI, Postgres 16 + pgvector image, Docker (multi-stage build), Docker Compose, ruff, mypy, pytest, pre-commit, GitHub Actions.
+**Tech:** uv, FastAPI, Postgres 16 + pgvector image, Docker (multi-stage build), Docker Compose, ruff, mypy, pytest, pre-commit, GitHub Actions, MkDocs Material.
 
 **Tasks:**
 - [x] `backend/pyproject.toml` with uv; `src/market_desk/` package; FastAPI app with `/health`
@@ -266,6 +268,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] ruff + mypy + pytest configured in `pyproject.toml`; pre-commit hooks
 - [ ] `Makefile`: `up`, `down`, `test`, `lint`, `fmt`
 - [ ] GitHub Actions: lint + type check + tests on PRs and on `main` (Postgres as a service container)
+- [ ] Journal site: MkDocs Material on GitHub Pages, one page per task, deployed by a GitHub Actions workflow on push to `main` ([ADR-0002](adr/0002-journal-site-mkdocs-github-pages.md))
 - [ ] Branch protection on `main`: PR + green CI required
 - [ ] README: one-paragraph pitch + "Status: Sprint 0"
 
@@ -299,7 +302,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] `webhooks/`: inbound endpoint verifying an HMAC signature; outbound dispatcher with signing and retries
 - [ ] n8n in Docker Compose; a flow that receives "new 10-K filed for a watchlist company" and posts to Slack
 - [ ] A scheduled check (simple background task) that detects new filings for watchlist companies and fires the outbound webhook
-- [ ] ADR-0002: client design (sync vs async, retry policy)
+- [ ] ADR-0003: client design (sync vs async, retry policy)
 
 **Done when:** a forced 429 is retried and logged instead of crashing, and an n8n flow receives a "new 10-K" event and posts it to Slack.
 
@@ -331,7 +334,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] `POST /chat` endpoint (streaming response) using the loop
 - [ ] Tests: fake LLM responses to test the loop deterministically (tool call → result → answer; tool error; step limit hit)
 - [ ] `agent/graph.py`: the same flow in LangGraph, including an interrupt for confirmation
-- [ ] ADR-0003: hand-written loop vs LangGraph, trade-offs and which one the API uses
+- [ ] ADR-0004: hand-written loop vs LangGraph, trade-offs and which one the API uses
 - [ ] `mcp_server/`: expose `tools/` over MCP; connect it in Claude Desktop or Claude Code next to Cala's MCP server
 
 **Done when:** "Compare the main risks of the companies on my watchlist" runs multi-step with cited tool calls in both implementations, and the MCP server works from a Claude client.
@@ -375,7 +378,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 **Docs if stuck:** [pgvector](https://github.com/pgvector/pgvector) · [PostgreSQL full-text search](https://www.postgresql.org/docs/current/textsearch.html) · [Sentence Transformers](https://github.com/UKPLab/sentence-transformers)
 
-> ### ✅ Checkpoint: first usable version (~39h)
+> ### ✅ Checkpoint: first usable version (~40.5h)
 > Integrations, a hand-written agent, MCP, and measured RAG on real financial data: the core of the product works end to end. Make sure the README explains it in 30 seconds and take a short break before the next half.
 
 ---
@@ -437,7 +440,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] Custom vocabulary / keyword boosting + entity post-correction; WER after
 - [ ] Voice settings per client (voice, speaking style) from Sprint 4's config
 - [ ] Optional stretch: a phone number (Twilio) routed to the same pipeline
-- [ ] ADR-0004: provider choice and latency findings
+- [ ] ADR-0005: provider choice and latency findings
 
 **Done when:** you can ask out loud for a company's latest revenue and get a spoken, sourced answer, with a measured before/after transcription accuracy on your ticker list.
 
@@ -499,7 +502,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] GitHub Actions: OIDC role; on merge to `main` build, push and deploy
 - [ ] `make cloud-up` / `make cloud-down` wrapping `terraform apply` / `destroy`
 - [ ] Smoke test after deploy (`/health`, one chat request)
-- [ ] ADR-0005: deployment design and cost per day while up
+- [ ] ADR-0006: deployment design and cost per day while up
 
 **Done when:** merging a PR deploys automatically to a public URL, and `terraform destroy` followed by `terraform apply` rebuilds a working stack.
 

@@ -1,6 +1,6 @@
 # Sprint 0 — Scaffold
 
-**Dates:** 2026-10-10 → · **Hours:** ~3.5h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-4h)
+**Dates:** 2026-10-10 → · **Hours:** ~3.5h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-65h)
 
 ## Goal (in my own words)
 A clean, professional skeleton every later sprint builds on: an installable Python package, a FastAPI service backed by Postgres in Docker, automated lint/type/test checks, and CI on every PR. Everything later depends on it.
@@ -26,6 +26,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | 2026-10-11 | Constraint naming convention on `Base.metadata` | Predictable names (`pk_x`, `uq_x_col`) so later migrations can alter/drop constraints | Let Postgres generate names | — |
 | 2026-10-11 | First migration empty; pgvector extension deferred to Sprint 3 | Learn the mechanism first; enable things when they're used | `CREATE EXTENSION vector` in the first migration | — |
 | 2026-10-12 | Stairway test uses `Config("")` + `script_location="market_desk:db:migrations"` (package notation) | Works from any working directory, via the installed package | `Config(toml_file="pyproject.toml")`: reuses real config but path is relative to cwd | — |
+| 2026-10-12 | Journal published as a site: MkDocs Material on GitHub Pages, one page per task; new Sprint 0 task right after CI | Searchable, visual journal for review; same Markdown as the *Record* step, so nothing to keep in sync; free | Plain Markdown on GitHub; a separate page outside the repo | [ADR-0002](../adr/0002-journal-site-mkdocs-github-pages.md) |
 
 ## Concepts
 **`pyproject.toml`**: the one standard file (PEP 621) that describes a Python project. `[project]` holds metadata and *runtime* dependencies (what the app needs to run). `[dependency-groups]` holds *dev-only* groups (tests, linters) that never get installed in production. `[build-system]` says which tool turns the source into an installable package (here `uv_build`).

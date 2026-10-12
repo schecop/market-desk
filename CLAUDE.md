@@ -32,7 +32,7 @@ This is a learning project first. Pablo must always know what is being done, why
 4. **Check questions**: one or two, short.
 5. **Guided exercise**: Pablo does it himself (rules below).
 6. **Verify**: tests, ruff and mypy green; Claude reviews Pablo's exercise code and points out issues without rewriting it.
-7. **Record**: journal (decisions, concepts, code map, gotchas, exercise), tick the PLAN checkbox.
+7. **Record**: journal (decisions, concepts, code map, gotchas, exercise), tick the PLAN checkbox. Once the journal site task is done ([ADR-0002](docs/adr/0002-journal-site-mkdocs-github-pages.md)), this means one page per task in the site layout instead of rows in `sprint-N.md`.
 8. **Commit** only when Pablo says so: show `git status`, propose a conventional commit message with a why-body, then commit.
 
 ### Guided exercise rules
