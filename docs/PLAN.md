@@ -8,9 +8,9 @@
 |---|---|
 | Owner | Pablo Sala |
 | Started | 2026-10-10 |
-| Total effort | ~88h over 9 sprints (Sprint 0-8), about 9 weeks at ~10h/week |
+| Total effort | ~90.5h over 9 sprints (Sprint 0-8), about 9 weeks at ~10h/week |
 | Budget | up to ~€20-30/month for paid services |
-| Checkpoint | after Sprint 3 (~38h): first usable version |
+| Checkpoint | after Sprint 3 (~40.5h): first usable version |
 
 ---
 
@@ -34,13 +34,13 @@
 1. Read the **latest entry in `PROGRESS.md`**: what was done, the next step, blockers.
 2. Open the **current sprint** in Section 8 and find the first unchecked box.
 3. Bring the environment up (once Sprint 0 exists): `docker compose up -d` then `make test`. If tests are red, fixing them is the first task.
-4. Work on **one checkbox at a time**, on a branch, ending in a PR.
+4. Work on **one checkbox at a time**, on a branch, ending in a PR. Each checkbox follows the task lifecycle in `CLAUDE.md`: explain → build → walk-through → check questions → **guided exercise you do yourself** → verify → journal → commit (only when you say so).
 
 ### End of every session (5-10 minutes)
 1. Tick the boxes you finished in this file.
 2. Update the sprint journal (`docs/journal/sprint-N.md`): decisions, concepts, code map, gotchas from this session.
 3. Add a `PROGRESS.md` entry: date, what you did, what you learned, **the exact next step**, blockers, hours spent.
-4. Commit and push. **Never leave `main` with red CI.**
+4. Commit any finished task that is still uncommitted (only once its guided exercise is done), then push. **Never leave `main` with red CI.**
 
 ### Learning first: the trace you keep
 This is a hands-on learning project, so understanding matters more than speed. For every action you should know **what** is being done, **why**, and **which code** results, and be able to look it up later:
@@ -52,7 +52,7 @@ This is a hands-on learning project, so understanding matters more than speed. F
 | Lasting architectural decisions | `docs/adr/` |
 | Why each change was made | commit bodies and PR descriptions (`.github/pull_request_template.md`) |
 
-`CLAUDE.md` enforces this for Claude Code sessions: explain before acting, walk through every change afterwards (boilerplate included), one task at a time, short understanding checks on core pieces, and journal entries as you go.
+`CLAUDE.md` enforces this for Claude Code sessions: explain before acting, walk through every change afterwards (boilerplate included), one task at a time, short understanding checks, a **guided exercise after every task** (complete code, build or extend a feature, fix a bug, write a test), journal entries as you go, and **no commit until the exercise is done and you say so**.
 
 ### Restarting after a long break
 Re-read Sections 2-4 (why, what, how it fits together), then follow "Start of every session". The "Background" block in each sprint explains its concepts from scratch.
@@ -154,6 +154,7 @@ One product touches all of this in a realistic way: an agent that real users tal
 | Test mocks | respx | Mock httpx calls so CI never hits live APIs |
 | Quality | pytest, ruff, mypy, pre-commit | Tests, lint/format, types, enforced before commit |
 | CI/CD | GitHub Actions | Free for public repos; OIDC to AWS in Sprint 7 |
+| Journal site | MkDocs Material on GitHub Pages | Searchable learning journal built from the Markdown in `docs/journal/`; free hosting, deployed by GitHub Actions ([ADR-0002](adr/0002-journal-site-mkdocs-github-pages.md)) |
 | LLM | Claude API (`anthropic` SDK): `claude-sonnet-5-5` for the agent, `claude-haiku-5-5` for cheap steps and evals | Strong tool use; Haiku and prompt caching keep cost down |
 | Agent framework | LangGraph (comparison only) | Widely used agent framework; contrast with the hand-written loop |
 | MCP | Official MCP Python SDK | Same tools exposed as an MCP server, like Cala's own |
@@ -201,6 +202,7 @@ market-desk/
 ├── Makefile                 make up / test / lint / eval / fmt
 ├── docker-compose.yml       postgres+pgvector, api, (n8n), (langfuse)
 ├── .env.example
+├── mkdocs.yml               journal site config (MkDocs Material → GitHub Pages)
 ├── backend/
 │   ├── pyproject.toml
 │   ├── src/market_desk/
@@ -222,7 +224,7 @@ market-desk/
 │   └── pull_request_template.md   what / why / how / decisions / learned / verified
 └── docs/
     ├── PLAN.md              this file
-    ├── journal/             learning trace, one file per sprint
+    ├── journal/             learning trace, one page per task (published as the journal site)
     └── adr/                 architecture decision records
 ```
 
@@ -234,21 +236,21 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 | # | Sprint | Hours | Main skills |
 |---|---|---|---|
-| 0 | Scaffold | ~4h | SWE practices |
+| 0 | Scaffold | ~6.5h | SWE practices, containers, docs site |
 | 1 | Integrations layer | ~10h | Backend & integrations, n8n |
 | 2 | Agent core | ~12h | Agents outside Claude Code |
 | 3 | RAG with evaluation | ~12h | RAG, financial data |
-| — | **Checkpoint: first usable version** | ~38h total | |
+| — | **Checkpoint: first usable version** | ~40.5h total | |
 | 4 | React + TypeScript dashboard | ~12h | Full-stack web |
 | 5 | Voice channel | ~12h | Voice agents |
 | 6 | Observability and evals in CI | ~10h | Observability, debugging live agents |
 | 7 | Ship to AWS | ~10h | Containers, deployment, IaC |
 | 8 | Second client, docs and demo | ~6h | Multi-client, docs, communication |
-| | **Total** | **~88h** | |
+| | **Total** | **~90.5h** | |
 
 ---
 
-### Sprint 0 — Scaffold (~4h)
+### Sprint 0 — Scaffold (~6.5h)
 
 **Objective:** a clean, professional skeleton that every later sprint builds on.
 
@@ -256,15 +258,17 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 **Background:** a modern Python service has a `pyproject.toml` (dependencies and tool config in one file), a `src/` layout (so tests import the installed package, not loose files), automated lint/format/type checks, and CI that runs them on every PR. Docker Compose runs the database locally exactly as it will run elsewhere.
 
-**Tech:** uv, FastAPI, Postgres 16 + pgvector image, Docker Compose, ruff, mypy, pytest, pre-commit, GitHub Actions.
+**Tech:** uv, FastAPI, Postgres 16 + pgvector image, Docker (multi-stage build), Docker Compose, ruff, mypy, pytest, pre-commit, GitHub Actions, MkDocs Material.
 
 **Tasks:**
-- [ ] `backend/pyproject.toml` with uv; `src/market_desk/` package; FastAPI app with `/health`
-- [ ] `docker-compose.yml` with `pgvector/pgvector` Postgres; `/health` checks the DB connection
-- [ ] SQLAlchemy session + Alembic initialised (first empty migration)
-- [ ] ruff + mypy + pytest configured in `pyproject.toml`; pre-commit hooks
-- [ ] `Makefile`: `up`, `down`, `test`, `lint`, `fmt`
-- [ ] GitHub Actions: lint + type check + tests on PRs and on `main` (Postgres as a service container)
+- [x] `backend/pyproject.toml` with uv; `src/market_desk/` package; FastAPI app with `/health`
+- [x] `docker-compose.yml` with `pgvector/pgvector` Postgres; `/health` checks the DB connection
+- [x] SQLAlchemy session + Alembic initialised (first empty migration)
+- [x] Multi-stage `Dockerfile` (uv) for the API + `api` service in `docker-compose.yml`; runs migrations on start ([ADR-0001](adr/0001-containerise-api-in-sprint-0.md))
+- [x] ruff + mypy + pytest configured in `pyproject.toml`; pre-commit hooks
+- [x] `Makefile`: `up`, `down`, `test`, `lint`, `fmt`
+- [x] GitHub Actions: lint + type check + tests on PRs and on `main` (Postgres as a service container)
+- [ ] Journal site: MkDocs Material on GitHub Pages, one page per task, deployed by a GitHub Actions workflow on push to `main` ([ADR-0002](adr/0002-journal-site-mkdocs-github-pages.md))
 - [ ] Branch protection on `main`: PR + green CI required
 - [ ] README: one-paragraph pitch + "Status: Sprint 0"
 
@@ -298,7 +302,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] `webhooks/`: inbound endpoint verifying an HMAC signature; outbound dispatcher with signing and retries
 - [ ] n8n in Docker Compose; a flow that receives "new 10-K filed for a watchlist company" and posts to Slack
 - [ ] A scheduled check (simple background task) that detects new filings for watchlist companies and fires the outbound webhook
-- [ ] ADR-0001: client design (sync vs async, retry policy)
+- [ ] ADR-0003: client design (sync vs async, retry policy)
 
 **Done when:** a forced 429 is retried and logged instead of crashing, and an n8n flow receives a "new 10-K" event and posts it to Slack.
 
@@ -330,7 +334,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] `POST /chat` endpoint (streaming response) using the loop
 - [ ] Tests: fake LLM responses to test the loop deterministically (tool call → result → answer; tool error; step limit hit)
 - [ ] `agent/graph.py`: the same flow in LangGraph, including an interrupt for confirmation
-- [ ] ADR-0002: hand-written loop vs LangGraph, trade-offs and which one the API uses
+- [ ] ADR-0004: hand-written loop vs LangGraph, trade-offs and which one the API uses
 - [ ] `mcp_server/`: expose `tools/` over MCP; connect it in Claude Desktop or Claude Code next to Cala's MCP server
 
 **Done when:** "Compare the main risks of the companies on my watchlist" runs multi-step with cited tool calls in both implementations, and the MCP server works from a Claude client.
@@ -374,7 +378,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 **Docs if stuck:** [pgvector](https://github.com/pgvector/pgvector) · [PostgreSQL full-text search](https://www.postgresql.org/docs/current/textsearch.html) · [Sentence Transformers](https://github.com/UKPLab/sentence-transformers)
 
-> ### ✅ Checkpoint: first usable version (~38h)
+> ### ✅ Checkpoint: first usable version (~40.5h)
 > Integrations, a hand-written agent, MCP, and measured RAG on real financial data: the core of the product works end to end. Make sure the README explains it in 30 seconds and take a short break before the next half.
 
 ---
@@ -436,7 +440,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] Custom vocabulary / keyword boosting + entity post-correction; WER after
 - [ ] Voice settings per client (voice, speaking style) from Sprint 4's config
 - [ ] Optional stretch: a phone number (Twilio) routed to the same pipeline
-- [ ] ADR-0003: provider choice and latency findings
+- [ ] ADR-0005: provider choice and latency findings
 
 **Done when:** you can ask out loud for a company's latest revenue and get a spoken, sourced answer, with a measured before/after transcription accuracy on your ticker list.
 
@@ -492,13 +496,13 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 **Tasks:**
 - [ ] AWS Budgets alert at €20 (do this **first**)
-- [ ] Multi-stage Dockerfile for the backend; frontend production build
+- [ ] Harden the backend Dockerfile from Sprint 0 for production (ADR-0001); frontend production build
 - [ ] `infra/terraform/`: VPC basics, ECR, RDS Postgres (smallest instance), ECS Fargate service, S3 + CloudFront, Secrets Manager, CloudWatch logs
 - [ ] Enable pgvector on RDS; run Alembic migrations as a one-off task
 - [ ] GitHub Actions: OIDC role; on merge to `main` build, push and deploy
 - [ ] `make cloud-up` / `make cloud-down` wrapping `terraform apply` / `destroy`
 - [ ] Smoke test after deploy (`/health`, one chat request)
-- [ ] ADR-0004: deployment design and cost per day while up
+- [ ] ADR-0006: deployment design and cost per day while up
 
 **Done when:** merging a PR deploys automatically to a public URL, and `terraform destroy` followed by `terraform apply` rebuilds a working stack.
 

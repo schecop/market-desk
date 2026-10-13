@@ -17,4 +17,5 @@ New sprint: copy [`_template.md`](_template.md) to `sprint-N.md` and add it to t
 | Concepts learned | journal → Concepts | when first met |
 | Which file does what, and why | journal → Code map | when the file is created or changes role |
 | Bugs, surprises | journal → Gotchas | when solved |
+| Guided exercises (what I did, what I got wrong) | journal → Exercises | when the exercise passes |
 | Why a change was made | commit body + PR description | every commit / PR |

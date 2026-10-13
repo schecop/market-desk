@@ -3,7 +3,7 @@
 Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md`](docs/PLAN.md).
 
 **Current sprint:** Sprint 0 — Scaffold (not started)
-**Hours so far:** 0 / ~88
+**Hours so far:** 0 / ~89
 
 <!-- Template (copy above the latest entry):
 ## YYYY-MM-DD · Sprint N · Xh

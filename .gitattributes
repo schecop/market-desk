@@ -1,0 +1,14 @@
+# Store and check out text files with LF line endings on every OS.
+# Code here runs on Linux (Docker, CI, AWS); CRLF breaks shell scripts and Makefiles.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files: never touch
+*.png binary
+*.jpg binary
+*.wav binary
+*.mp3 binary

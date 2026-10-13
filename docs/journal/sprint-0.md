@@ -1,6 +1,6 @@
 # Sprint 0 — Scaffold
 
-**Dates:** 2026-10-10 → · **Hours:** 0h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-4h)
+**Dates:** 2026-10-10 → · **Hours:** ~7.5h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-65h)
 
 ## Goal (in my own words)
 A clean, professional skeleton every later sprint builds on: an installable Python package, a FastAPI service backed by Postgres in Docker, automated lint/type/test checks, and CI on every PR. Everything later depends on it.
@@ -10,9 +10,133 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 |---|---|---|---|---|
 | 2026-10-10 | Standalone public repo outside OneDrive (`C:\Users\pablo\PP\market-desk`) | OneDrive syncing `.venv`, `node_modules` and Docker volumes causes slowness and file locks; GitHub is the backup | Inside an existing workspace folder; OneDrive folder | — |
 | 2026-10-10 | Learning protocol in `CLAUDE.md` (explain before acting, walk through after, journal everything) | This is a learning project: understanding and a re-readable trace matter more than speed | Let Claude generate freely and review at the end | — |
+| 2026-10-10 | uv with `uv init --package` and a `src/` layout; Python pinned to 3.12 | One tool for Python version, venv, deps and lockfile; `--package` makes the code an installable package so tests import it like a user would | Poetry; pip + venv + requirements.txt; flat layout | — (in stack table) |
+| 2026-10-10 | `pytest` + `httpx2` as a dev dependency group, not runtime deps | Test-only tools shouldn't ship in the production image; Starlette's TestClient now expects `httpx2` | Put them in `dependencies`; keep `httpx` and live with the deprecation warning | — |
+| 2026-10-10 | App lives in `market_desk/api/main.py`, not the package root | Matches the repo layout in PLAN section 7: `api/` is one layer next to `clients/`, `agent/`, etc. | Single `main.py` at package root | — |
+| 2026-10-10 | `.gitattributes` with `eol=lf` | Code runs on Linux (Docker, CI, AWS); CRLF breaks shell scripts and Makefiles; per-repo file beats each machine's `core.autocrlf` | Rely on everyone's git config | — |
+| 2026-10-10 | Compose runs only `db` for now; API runs with `uv run uvicorn` | Fast reload, debugger works; API container comes with the Dockerfile | API service in compose now | — |
+| 2026-10-10 | SQLAlchemy engine + psycopg 3 already in task 2 | `/health` shares the app's engine and pool; no throwaway raw-driver code | Raw `psycopg.connect()` in `/health`; asyncpg + async engine | — |
+| 2026-10-10 | Sync (not async) DB access | Simpler to learn and debug; FastAPI runs sync handlers in a threadpool, plenty for this load | Async SQLAlchemy + asyncpg (revisit if voice/streaming needs it) | — |
+| 2026-10-10 | `/health` returns 503 when DB is down | Load balancers and orchestrators route on status codes, not JSON bodies | Always 200 with a status field | — |
+| 2026-10-10 | DB-up test uses the real Postgres, not a mock | Mocking the DB would test nothing; CI gets Postgres as a service container | Mock `database_is_reachable`; skip test when DB absent (hides failures) | — |
+| 2026-10-11 | Dockerfile + `api` Compose service in Sprint 0 (moved forward from Sprint 7), right after Alembic | Makes "Done when" true; container issues surface while the app is tiny; one command starts the whole stack | Keep it in Sprint 7 and reword "Done when" | [ADR-0001](../adr/0001-containerise-api-in-sprint-0.md) |
+| 2026-10-11 | Alembic config in `pyproject.toml` (`pyproject` template); `alembic.ini` keeps only logging | All tool config in one file; no DB URL in a committed file | `generic` template with everything in `alembic.ini` | — |
+| 2026-10-11 | Migrations inside the package (`src/market_desk/db/migrations/`) | Matches PLAN layout; shipped with the code into the Docker image | `backend/alembic/` next to `src/` | — |
+| 2026-10-11 | `env.py` reads the URL from `get_settings()` | App and migrations can never target different DBs; no credentials in `alembic.ini` | `sqlalchemy.url` in `alembic.ini`; separate env var for Alembic | — |
+| 2026-10-11 | Constraint naming convention on `Base.metadata` | Predictable names (`pk_x`, `uq_x_col`) so later migrations can alter/drop constraints | Let Postgres generate names | — |
+| 2026-10-11 | First migration empty; pgvector extension deferred to Sprint 3 | Learn the mechanism first; enable things when they're used | `CREATE EXTENSION vector` in the first migration | — |
+| 2026-10-12 | Stairway test uses `Config("")` + `script_location="market_desk:db:migrations"` (package notation) | Works from any working directory, via the installed package | `Config(toml_file="pyproject.toml")`: reuses real config but path is relative to cwd | — |
+| 2026-10-12 | Multi-stage Dockerfile: uv image builds `.venv`, `python:3.12-slim-bookworm` runs it | Small runtime image without uv or build tools; deps layer cached separately from code | Single stage; `alpine` (musl breaks many wheels); `pip install` (ignores `uv.lock`) | [ADR-0001](../adr/0001-containerise-api-in-sprint-0.md) |
+| 2026-10-12 | Separate one-off `migrate` Compose service; `api` waits for it to exit 0 | No race between API replicas running migrations; mirrors the one-off ECS task in Sprint 7; API never starts on an unexpected schema | `alembic upgrade head && uvicorn ...` in the API's start command | — |
+| 2026-10-12 | `script_location` in package notation (`market_desk:db:migrations`) | Image has no `src/`, only site-packages; one setting works locally, in tests and in the container | Filesystem path + copy `src/` into the image | — |
+| 2026-10-12 | Project installed `--no-editable` in the image | Runtime stage needs only `.venv` | Editable install + copy `src/` | — |
+| 2026-10-13 | ruff for lint + format (rules E, W, F, I, UP, B, SIM; line length 100) | One fast tool replaces black, isort, flake8 and plugins | black + isort + flake8 | — |
+| 2026-10-13 | mypy `strict = true` from day one, with the Pydantic plugin | Cheapest while the codebase is tiny; enabling later means hundreds of errors at once | Non-strict mypy; pyright | — |
+| 2026-10-13 | pytest `filterwarnings = ["error"]` | Deprecations fail the run instead of scrolling past (the `httpx` warning in task 1 would have been caught) | Default: warnings only printed | — |
+| 2026-10-13 | pre-commit Python hooks as `repo: local` via `uv run --directory backend` | Same ruff/mypy versions as `uv.lock`; mypy sees the real dependencies | `ruff-pre-commit` / `mirrors-mypy` repos (second version to sync; isolated mypy reports false errors) | — |
+| 2026-10-13 | pytest not in pre-commit | Needs Postgres and takes seconds; runs in `make test` and CI | Run tests on every commit | — |
+| 2026-10-13 | Unused imports allowed only in `migrations/versions/` + Alembic post-write hooks run ruff on new migrations | Template always imports `sa`/`op`; generated files still pass every other check | Edit the template per migration; ignore migrations entirely | — |
+| 2026-10-13 | `Makefile` as the single entry point; GNU make installed with `winget install ezwinports.make` | CI calls `make lint`/`make test`, so local and CI checks can't drift; `make` is on every Linux runner | `just`; `poe`/`tox`; PowerShell scripts (Windows-only); `mingw32-make` (different name); msys64 on PATH (shadows Windows tools) | — |
+| 2026-10-13 | `lint` only checks, `fmt` rewrites | CI must fail on bad formatting, not fix it in a throwaway runner | One target that formats and checks | — |
+| 2026-10-14 | CI: one `checks` job (Postgres service container, `make lint` + `make test`) and a parallel `docker` build job | Real DB in CI; broken Dockerfile caught on the PR (ADR-0001) | Raw `uv run` commands in YAML; Python version matrix (app pinned to 3.12) | — |
+| 2026-10-14 | Actions pinned by tag (`checkout@v7`, `setup-uv@v10.3.0`); uv pinned to `0.13.0` in CI | Reproducible runs; readable. Hardening later: pin by commit SHA (a tag can be moved to malicious code) | SHA pinning now; floating latest uv | — |
+| 2026-10-14 | Read-only `GITHUB_TOKEN`, 15-min job timeouts, cancel outdated runs | Least privilege; a hung test can't burn hours of minutes | Defaults (write token, 6h timeout) | — |
+| 2026-10-14 | First PR as a draft into `main` covering tasks 1-6; journal site, branch protection and README in later PRs | Draft runs CI but signals "not ready"; one reviewable unit for the scaffold | One PR per task (would have needed to start on day 1) | — |
+| 2026-10-12 | Journal published as a site: MkDocs Material on GitHub Pages, one page per task; new Sprint 0 task right after CI | Searchable, visual journal for review; same Markdown as the *Record* step, so nothing to keep in sync; free | Plain Markdown on GitHub; a separate page outside the repo | [ADR-0002](../adr/0002-journal-site-mkdocs-github-pages.md) |
 
 ## Concepts
-_(fill in as you go)_
+**`pyproject.toml`**: the one standard file (PEP 621) that describes a Python project. `[project]` holds metadata and *runtime* dependencies (what the app needs to run). `[dependency-groups]` holds *dev-only* groups (tests, linters) that never get installed in production. `[build-system]` says which tool turns the source into an installable package (here `uv_build`).
+
+**`uv.lock`**: the exact resolved version of every package, transitive ones included. `pyproject.toml` says `fastapi>=0.143.0` (a range); the lock says exactly which version. Commit it so CI, Docker and your laptop install identical environments. `uv sync` installs from it; `uv add` updates both files.
+
+**`src/` layout**: the package lives in `backend/src/market_desk/`, not `backend/market_desk/`. Python can't import it just because it's in the current folder; it has to be *installed* (uv installs it in editable mode into `.venv`). That way tests exercise the package the way a real user would, and a missing file or a broken package config fails in tests instead of in production.
+
+**`uv run` auto-syncs**: before running a command, `uv run` checks `.venv` against `uv.lock` and creates/updates it if needed. Deleting `.venv` is harmless: the next `uv run` rebuilds it identically.
+
+**Why `src/` prevents "works on my machine"**: without `src/`, Python puts the current directory on `sys.path`, so `import market_desk` finds the loose source folder even if the package was never installed or is misconfigured. Tests pass locally and packaging bugs only appear where the package is really installed (Docker, CI). With `src/`, the only way the import works is through the installed package, so those bugs fail in tests first.
+
+**ASGI / uvicorn / FastAPI**: FastAPI is a framework: it maps URLs to Python functions and validates input/output. It doesn't listen on a port itself. Uvicorn is the *ASGI server*: it opens the socket, speaks HTTP, and calls the app object. `uvicorn market_desk.api.main:app` means "import the module `market_desk.api.main`, take the variable `app`".
+
+**Return type annotations in FastAPI**: `-> dict[str, str]` isn't decoration. FastAPI uses it to validate the response and to document it in the OpenAPI schema (`/docs`, `/openapi.json`). In Sprint 4 that schema generates the frontend's TypeScript types.
+
+**`TestClient`**: calls the app *in-process*: no server, no port, no network. It's fast and deterministic, and it's what lets CI test endpoints without starting uvicorn.
+
+**Liveness vs readiness**: a liveness check answers "is the process alive?"; a readiness check answers "can it actually serve requests (DB reachable, etc.)?". Since task 2, `/health` is a readiness check: 200 when Postgres answers `SELECT 1`, **503** when it doesn't, so a load balancer (Sprint 7) stops routing traffic to an instance that can't serve it.
+
+**Docker Compose basics**: `docker-compose.yml` declares services. `image` = what to run; `environment` = config the image reads on first start (creates user/db); `ports: "5432:5432"` = host:container; a **named volume** (`pgdata`) keeps data when the container is removed (`docker compose down` keeps it, `down -v` deletes it); `healthcheck` lets Docker (and later CI) know when Postgres is actually ready, not just started.
+
+**Engine and connection pool**: `create_engine()` doesn't connect; it creates a *pool* that opens connections lazily and reuses them, because opening a Postgres connection is slow (TCP + auth). Create it **once** per process (`@lru_cache` on `get_engine`). `pool_pre_ping=True` checks a pooled connection before handing it out, so after a DB restart the app recovers by itself instead of failing on a dead connection. `connect_timeout` makes a down DB fail in seconds instead of hanging.
+
+**Database URL anatomy**: `postgresql+psycopg://user:password@host:port/dbname`. The `+psycopg` part picks the *driver* SQLAlchemy uses (psycopg 3).
+
+**pydantic-settings**: a `BaseSettings` class reads each field from an env var of the same name (case-insensitive: `database_url` ← `DATABASE_URL`), then from `.env`, then the default. Real env vars win, which is how Docker/AWS will inject config. Types are validated at startup, so bad config fails immediately.
+
+**FastAPI dependency injection**: `engine: Annotated[Engine, Depends(get_engine)]` tells FastAPI to call `get_engine()` and pass the result in. The handler doesn't know where the engine comes from, so tests can swap it: `app.dependency_overrides[get_engine] = lambda: other_engine`. Always clear overrides after the test so they don't leak.
+
+**Test isolation**: every test must pass alone and in any order. Anything shared across tests (module-level objects like `app`, function caches like `@lru_cache`, env vars) can carry state from one test into the next, which creates *order-dependent* tests: green or red depending on the order, not the code. Check by running tests in a different order with explicit node IDs: `pytest a.py::test_x b.py::test_y` runs them in that order.
+
+**`monkeypatch`** (built-in pytest fixture): makes temporary changes at runtime (`setenv`, `delenv`, `setattr`) and undoes them all when the test ends, **even if the test fails**. Safer than writing to `os.environ` directly, which leaks into every later test.
+
+**`lru_cache` and tests**: a cached function keeps its result across tests. `get_settings.cache_clear()` empties it; `cache_info()` shows hits and misses. When testing *the thing being cached* (`Settings`), build it directly instead of going through the cache, and there's nothing to clean up.
+
+**`==` vs `is`**: `==` compares values (Pydantic models with equal fields are `==`); `is` checks it's the *same object in memory*. "Is it cached?" is an `is` question.
+
+**Session (unit of work)**: a SQLAlchemy `Session` tracks the objects you load, add and change, and writes them all in one transaction on `commit()` (or throws them away on `rollback()`/close). `sessionmaker` is the factory; `get_session()` gives each request its own session and always closes it. `expire_on_commit=False` keeps objects usable after commit (no surprise reload, no error once the session is closed).
+
+**Generator dependencies**: a FastAPI dependency with `yield` runs up to `yield`, hands the value to the route, then resumes after the response: the code after `yield` (or the `with` exit) is the cleanup. Same shape as a pytest fixture. You can drive one by hand: `next(gen)` = setup, exhaust it = teardown.
+
+**`DeclarativeBase` and metadata**: every model class inherits from `Base`; `Base.metadata` is the registry of all tables. Alembic's `--autogenerate` diffs that registry against the real DB, so models must be imported in `env.py` or autogenerate thinks they don't exist.
+
+**Naming conventions**: constraints (primary key, unique, foreign key, index, check) have names in Postgres. Migrations refer to them by name (`op.drop_constraint("uq_watchlist_ticker", ...)`), so names must be predictable. `MetaData(naming_convention=...)` makes SQLAlchemy name them; Alembic's `op.create_table` uses the same convention, as `\d watchlist` showed (`pk_watchlist`, `uq_watchlist_ticker`).
+
+**Migrations (Alembic)**: the version history of the schema. Each file has `revision`, `down_revision` (its parent, which forms a chain), `upgrade()` and `downgrade()`. The DB stores **one row** in `alembic_version`: the revision it's at. Alembic compares that with the chain to decide what to run, and **never looks at the real tables**. If they disagree (manual changes, a broken `downgrade()`), later migrations crash. Postgres runs DDL inside transactions, so a failing migration rolls back cleanly. Commands: `upgrade head`, `downgrade -1`, `downgrade base`, `current`, `history`, `revision -m`, `revision --autogenerate` (always review its output).
+
+**Migration rules of thumb**:
+- A migration is frozen history: never import app code (sessions, services, models) into it, or refactoring the app breaks old migrations. `op` and `sqlalchemy` only.
+- Never edit a migration that has already been applied anywhere: Alembic won't rerun it. Write a new one.
+- Use generic types (`sa.Integer`, `sa.String(10)`, `sa.DateTime`), which is what autogenerate writes.
+- Timestamps: `sa.DateTime(timezone=True)` (`timestamptz`). Plain `TIMESTAMP` forgets the time zone, so laptop (Madrid) and RDS (UTC) values silently disagree.
+- If a column always has a value, say so: `nullable=False`.
+
+**Stairway test**: `upgrade head -> downgrade base -> upgrade head`. No `assert` needed: a failing migration raises. A `downgrade()` that silently does nothing is caught by the *final* upgrade (`DuplicateTable`), which is why the third step exists.
+
+**Image vs container**: an *image* is the built, read-only template (`docker build`); a *container* is a running instance of it (`docker run`, `compose up`). One image, many containers: `migrate` and `api` run the same image with different commands. Build-time problems show in the build output; runtime problems in `docker compose logs <service>`.
+
+**Layer caching**: each Dockerfile instruction makes a layer. Docker reuses a layer if the instruction **and its inputs** are unchanged; once one layer is rebuilt, **every layer after it is rebuilt too**. So put what changes rarely first: dependency manifests (`pyproject.toml`, `uv.lock`) and install, *then* `COPY` the code. With `COPY . /app` first, any code edit reinstalls every dependency. Read the `CACHED` markers in the build output, not just the time.
+
+**Multi-stage builds**: several `FROM`s in one Dockerfile. Earlier stages build things (with compilers, uv, caches); the final stage copies only the result (`COPY --from=builder`). Smaller image, faster pulls (ECS in Sprint 7), smaller attack surface. Builder and runtime must share OS and Python path, because a venv's `python` is a link to the system interpreter.
+
+**BuildKit mounts**: `--mount=type=bind` makes a file visible during one `RUN` only (not stored in a layer); `--mount=type=cache` keeps a directory (uv's download cache) between builds.
+
+**Container hardening basics**: non-root `USER`; `.dockerignore` keeps `.env` out (a secret copied into a layer stays in the image forever, even if deleted later); `--host 0.0.0.0` because `127.0.0.1` inside a container only accepts connections from inside it; exec-form `CMD ["uvicorn", ...]` so the app is PID 1 and gets `SIGTERM` (graceful stop in ~1s; shell form would wait 10s and then get killed).
+
+**Compose networking**: services share a network where each **service name is a hostname** (`db`). Inside a container, `localhost` is that container. `ports: "5432:5432"` is only for the host (your laptop) to reach a container.
+
+**`depends_on` conditions**: `service_healthy` waits for the healthcheck; `service_completed_successfully` waits for a one-off container to exit with code 0. If `migrate` fails, `api` never starts.
+
+**YAML anchors**: `x-backend: &backend` names a block; `<<: *backend` merges it into a service. Shared config written once.
+
+**Linter vs formatter vs type checker**: a *linter* (`ruff check`) finds likely bugs and bad patterns (unused imports, mutable default args); a *formatter* (`ruff format`) rewrites layout so style is never discussed; a *type checker* (`mypy`) proves the annotations are consistent across every code path. None of them run the code.
+
+**What mypy strict catches, and what it can't**: tests check the inputs you thought of; mypy checks every path for every type. The planted bug `return conn.execute(...).scalar()` in a `-> bool` function passed all 6 tests (`1` is truthy) but failed mypy with `[no-any-return]`; a query returning `0`/`NULL` would have made `/health` say 503 for a healthy DB. Don't trust mypy's "Success" past `Any` (untyped libraries, `# type: ignore`, `cast`), for logic errors (a wrong `bool` is still a `bool`), or for runtime data (JSON, env, DB rows): that's Pydantic's job.
+
+**pre-commit**: a framework that installs a git hook (`.git/hooks/pre-commit`) running configured checks on `git commit`. A hook that *modifies* files counts as failed on purpose: the fix isn't staged yet, so you review it and `git add` again. `.git/hooks` isn't versioned: every clone runs `pre-commit install` once. Hooks can be skipped (`--no-verify`), so CI runs the same checks again in a clean environment from the lockfile, plus the tests.
+
+**pytest config**: `filterwarnings = ["error"]` turns warnings into failures; `--strict-markers` makes a misspelled marker an error; `-ra` prints a summary of skips/failures.
+
+**Make essentials**: a target is assumed to be a **file** to build; `.PHONY` marks it as a command name, otherwise a file or folder called `test` makes `make test` print "up to date" and silently run nothing. `target: a b` = **prerequisites**: `a` then `b` run first (left to right normally; possibly in parallel with `make -j`), then the target's own recipe. Each recipe line runs in a **new shell** (a `cd` doesn't carry over: write `cd backend && ...`), and make stops at the first failing line. Recipe lines must start with a **tab**. If a Makefile must call itself, use `$(MAKE)`, not `make`, so the name and flags (`-n`, `-j`) carry over.
+
+**GitHub Actions anatomy**: a *workflow* (`.github/workflows/*.yml`) runs on *events* (`on: pull_request`, `push`). It has *jobs*, each on a fresh VM (*runner*), running in parallel unless linked by `needs:`. A job has *steps*: `uses:` runs a published action, `run:` runs shell commands. `services:` starts containers (our Postgres) before the steps; the steps run on the runner itself, so they reach a service at `localhost:<mapped port>` (in Compose it was the service name `db`). All `uses:` actions are downloaded before the first step, so a bad action reference fails the job in ~1s with no steps run.
+
+**Action versions are maintainer conventions**: `actions/checkout@v7` works because its maintainers move a `v7` tag along with each release; `astral-sh/setup-uv` publishes exact tags only (`v10.3.0`), so `@v10` doesn't exist. Exact versions (or commit SHAs) are the safer habit anyway: a moving tag can change between two runs.
+
+**Reading a failed run from the terminal**: `gh pr checks <n> --watch` waits for the result; `gh run view <run-id> --log-failed` shows only the failed steps; read the **last** `##[error]` line, everything above is runner setup.
+
+**What pre-commit can't catch**: hooks check *the commit*, not the repo. They're skipped with `--no-verify`, they don't run on machines where `pre-commit install` wasn't run, and once a broken file is committed, a later commit that doesn't stage it passes the hooks. CI checks the whole repo on every push, in a clean environment built from `uv.lock`.
+
+**CI caching**: setup-uv stores downloaded packages under a key that includes a hash of `uv.lock`, so a dependency change gets a fresh cache and nothing else does. The cache is saved only after a **successful** job, so the first green run after a key change saves it and the next run restores it.
+
+**pytest fixtures**: a function decorated with `@pytest.fixture` that tests request by parameter name. Code before `yield` is setup, after `yield` is teardown (runs even if the test fails).
 
 ## Code map
 | File | What it does | Why it exists / why this way |
@@ -21,17 +145,73 @@ _(fill in as you go)_
 | `CLAUDE.md` | Rules for Claude Code sessions | Tutor mode + learning protocol |
 | `PROGRESS.md` | Session log | Where we are and the next step |
 | `docs/journal/` | Learning trace per sprint | Decisions, concepts, code map, bugs, kept for later |
+| `backend/pyproject.toml` | Project metadata, runtime deps, dev group, build backend, `[tool.alembic]` (+ ruff post-write hooks), `[tool.ruff]`, `[tool.mypy]`, `[tool.pytest.ini_options]` | Single source for deps and (soon) tool config |
+| `backend/uv.lock` | Exact pinned versions of every dependency | Reproducible installs locally, in CI and in Docker |
+| `backend/.python-version` | Pins Python 3.12 for uv | Everyone (and CI) runs the same interpreter |
+| `backend/src/market_desk/api/main.py` | FastAPI `app` + `GET /health` (readiness, uses DB) | Entry point uvicorn serves; home of all routers later |
+| `backend/tests/test_health.py` | Tests `/health` with DB up (real Postgres) and down (overridden engine) | Covers both branches; shows the dependency-override pattern |
+| `backend/tests/test_config.py` | Env var beats default; `get_settings()` caches and `cache_clear()` resets it | My exercise; pins down config behaviour the whole app relies on |
+| `.gitattributes` | Forces LF line endings for every clone | Linux-bound code must not get CRLF |
+| `docker-compose.yml` | `db` (Postgres 16 + pgvector), one-off `migrate`, `api` on :8000; shared `x-backend` anchor | `docker compose up -d --build` starts the whole stack in order |
+| `backend/src/market_desk/config.py` | `Settings` (env vars / `.env`) + cached `get_settings()` | One typed place for all config; secrets stay out of code |
+| `backend/src/market_desk/db/engine.py` | Cached SQLAlchemy engine + `database_is_reachable()` | One connection pool per process; health logic testable on its own |
+| `backend/src/market_desk/db/base.py` | `Base` (DeclarativeBase) with constraint naming convention | Parent of every model; predictable constraint names for migrations |
+| `backend/src/market_desk/db/session.py` | Cached `sessionmaker` + `get_session()` request dependency | One unit of work per request, always closed |
+| `backend/alembic.ini` | Alembic logging config only | Settings in `pyproject.toml`, URL from `config.py` |
+| `backend/src/market_desk/db/migrations/env.py` | How Alembic connects: URL from settings, `Base.metadata` for autogenerate, online/offline modes, 3s connect timeout | Single source of truth for the DB URL |
+| `backend/src/market_desk/db/migrations/script.py.mako` | Template for new migration files (modern type hints) | Generated files pass ruff from the start |
+| `backend/src/market_desk/db/migrations/versions/` | The migration chain; first: `ce4e8980d9ca` (empty) | Versioned schema history |
+| `backend/tests/test_session.py` | Drives `get_session()` like FastAPI: works, then closed | Proves the cleanup runs |
+| `backend/tests/test_migrations.py` | Stairway test (up -> down -> up) | My exercise; catches broken `downgrade()` on the PR |
+| `backend/Dockerfile` | Multi-stage build: uv builder makes `.venv`, slim non-root runtime runs uvicorn | Same artefact locally, in CI and on ECS (Sprint 7) |
+| `backend/.dockerignore` | Keeps `.venv`, caches, tests and `.env` out of the build context | Smaller context, no secrets in images |
+| `.pre-commit-config.yaml` | Hooks on `git commit`: hygiene checks, ruff check/format, mypy (via `uv run`) | Problems blocked before a commit exists |
+| `Makefile` | `help`, `install`, `up`, `down`, `dev`, `test`, `lint`, `fmt`, `check` | One name per everyday command; CI calls the same targets |
+| `.github/workflows/ci.yml` | PR + `main` CI: lint/types/tests against a Postgres service container; Docker build job | Every change checked in a clean environment before merge |
 
 ## Gotchas and bugs
 | Symptom | Cause | Fix | Lesson |
 |---|---|---|---|
-| | | | |
+| `StarletteDeprecationWarning: Using httpx with starlette.testclient is deprecated` | Recent Starlette moved its TestClient to the `httpx2` package | `uv remove --dev httpx && uv add --dev httpx2` | Read warnings: they tell you about upcoming breakage. `httpx` itself is still what we'll use for API clients in Sprint 1 |
+| `uv`/`gh` "command not found" right after installing | The terminal was opened before the install changed PATH | Open a new terminal | PATH is read when a shell starts |
+| "LF will be replaced by CRLF" warnings on `git add` | `core.autocrlf=true` (Git for Windows default) converts line endings in the working copy | `.gitattributes` with `* text=auto eol=lf` | Line endings are a repo setting, not a personal one |
+| Health test fails with `ArgumentError: Could not parse SQLAlchemy URL` only when run after the config test | Config test went through `get_settings()` with a fake `DATABASE_URL`; the cached `Settings` outlived the test (`monkeypatch` restores env vars, not caches) | Build `Settings()` directly in that test; clear the cache at start and end of the caching test | Caches are shared state; check tests in more than one order |
+| Every `docker` command returns `500 Internal Server Error ... dockerDesktopLinuxEngine` | Docker Desktop's engine crashed | Quit and reopen Docker Desktop, `docker compose up -d`; data survives in the volume | Tell "my code is broken" apart from "my tools are broken" |
+| `alembic current` hangs for minutes | DB unreachable and `env.py`'s engine had no `connect_timeout` (the app's engine did) | `connect_args={"connect_timeout": 3}` in `env.py` | Every DB connection needs a timeout, including one-off tools |
+| `CommandError: No 'script_location' key found` in a test | `Config("../alembic.ini")`: wrong relative path, a missing file silently gives an empty Config, and `script_location` lives in `pyproject.toml` anyway | Package notation `market_desk:db:migrations` | Same relative-path trap as `.env` |
+| Stairway test fails with `DuplicateTable: relation "watchlist" already exists` even after fixing `downgrade()` | An earlier run with `downgrade()` = `pass` left `alembic_version` at base but the table in place | `DROP TABLE watchlist;` by hand | `alembic_version` and the real schema can drift; Alembic trusts the version table |
+| (exercise) `migrate` exits non-zero with `Connection refused`; `api` never starts | `DATABASE_URL` host `localhost`: inside a container that's the container itself | Host = service name `db` | Containers reach each other by service name; `ports:` is for the host only |
+| (exercise) 6 tests green, mypy `Returning Any from function declared to return "bool" [no-any-return]` | `.scalar()` returns `Any`; `/health` only checks truthiness, and `1` is truthy | Return `True` after a successful query (or `scalar_one() == 1`) | Tests see the inputs you tried; types cover every path |
+| CI job fails in 1s with no steps: `Unable to resolve action astral-sh/setup-uv@v10, unable to find version v10` | That repo publishes exact tags only; I assumed it had a moving major tag like `actions/checkout` | `setup-uv@v10.3.0` | Check an action's tags (`gh api repos/<owner>/<repo>/git/matching-refs/tags/v10`) before pinning |
+| CI cache key ends in `no-dependency-glob` | setup-uv resolves `cache-dependency-glob` relative to `working-directory`: `backend/uv.lock` became `backend/backend/uv.lock` | `cache-dependency-glob: uv.lock` | Third tool with the same relative-path trap (`.env`, `alembic.ini`, now this) |
+| A commit passes pre-commit while the repo has a lint error | Python hooks only trigger when a `.py` file is staged; the broken file was committed earlier with `--no-verify` | CI caught it; fixed in a new commit | Hooks check the commit, CI checks the repo |
+| (avoided) `.env` at repo root ignored when running from `backend/` | `env_file` paths are relative to the current directory | `env_file=("../.env", ".env")` | Relative paths resolve from where you *run*, not where the file lives |
+
+## Exercises
+| Date | Task (type) | Outcome | What I got wrong | Lesson |
+|---|---|---|---|---|
+| 2026-10-11 | Tasks 1-2. A: remove `dependency_overrides.clear()`, predict and run tests in reverse order (predict/verify). B: write `tests/test_config.py`, env var overrides default + `get_settings()` caching (write a missing test) | Done: 4 tests pass in every order | Didn't know `monkeypatch`; used `get_settings()` where a fresh `Settings()` was needed (order-dependent, then polluted the cache for the health test); used `==` to check "same object"; in A, blamed the fake URL instead of the leaked dependency override | Shared state (app overrides, caches, env) leaks between tests; test the object directly, not through the cache; `is` for identity |
+| 2026-10-12 | Task 3. A: hand-written `watchlist` migration, predict constraint names, apply, inspect with `\d`, downgrade, delete. B: stairway test with Alembic's command API (write a missing test) | Done: names matched the convention; 6 tests pass; broken `downgrade()` caught by the final upgrade | Imported app code (`get_session`) into a migration; `TIMESTAMP` without time zone and nullable `created_at`; `Config("../alembic.ini")` relative path; used `command.current` as if it checked something | Migrations are frozen history (no app imports); `timestamptz`; `alembic_version` is the only thing Alembic trusts |
+| 2026-10-13 | Dockerfile task. A: move `COPY . /app` above the deps install, predict and observe which steps rerun (break on purpose). B: `localhost` instead of `db` in `DATABASE_URL`, predict and diagnose from `ps -a` and logs | Done: predictions right; stack restored, `/health` 200, 6 tests pass | Said "build crashed" / "api image constructed" for runtime events (image vs container); A: only noted the next step lost cache, not every later one | Order layers by change frequency; image (build) vs container (run); `localhost` in a container is the container |
+| 2026-10-13 | Lint/type task. A: find and fix a planted bug from mypy output (fix a bug). B: commit a badly formatted file and watch pre-commit block it (break on purpose) | Done: mypy clean, 6 passed; commit blocked, ruff fixed the file | Explained the bug as "no False returned"; the core issue is `Any` where `bool` is promised, and falsy-but-valid results (`0`/`NULL`) giving a false 503 | Green tests ≠ correct types; modifying hooks fail on purpose so you review the fix |
+| 2026-10-14 | Makefile + CI (shared). A: add `make check` using prerequisites. B: commit an unused import with `--no-verify`, push, watch PR #1 go red, diagnose with `gh run view --log-failed`, fix (break on purpose) | Done with help: diagnosis right (checks job, "Lint and type check" step, `F401` + `I001`); Claude wrote the final `check: lint test` line and the `config.py` fix on request | A: used sub-make calls (`make lint` / `make test` in the recipe) instead of prerequisites, and plain `make` instead of `$(MAKE)`; B: said Docker passed because it runs on another VM in parallel, but the reason is that it never runs ruff (unused imports are valid Python) | Prerequisites, not sub-makes; hooks can be bypassed and only see the commit, CI sees the repo |
 
 ## Commands and snippets worth keeping
 ```bash
+cd backend
+uv sync                                              # create .venv from uv.lock
+uv add <pkg> / uv add --dev <pkg>                    # add runtime / dev dependency
+uv run pytest -q                                     # run tests inside the venv
+uv run uvicorn market_desk.api.main:app --reload     # dev server on :8000, docs at /docs
+
+docker compose up -d                                 # start Postgres (from repo root)
+docker compose ps                                    # status + health
+docker compose exec db psql -U market_desk           # SQL shell inside the container
+docker compose stop db / start db                    # simulate an outage
+docker compose down        # remove containers, keep data;  down -v also deletes the volume
 ```
 
 ## Open questions
-- [ ] ...
+- [ ] Stairway test runs `downgrade base` on the **dev** DB: harmless now, wipes local data from Sprint 1. Options: separate `market_desk_test` database for pytest, or run that test only in CI. Decide before Sprint 1's first model.
 
 ## Retrospective (at sprint end)

@@ -1,0 +1,49 @@
+# Local stack. Start everything with: docker compose up -d --build
+# Day-to-day dev can still run only the DB (docker compose up -d db) plus `uv run uvicorn --reload`.
+
+# Shared settings for the two services built from backend/Dockerfile
+x-backend: &backend
+  build: ./backend
+  image: market-desk-api
+  environment:
+    # Host is the service name `db`: inside a container, localhost is the container itself
+    DATABASE_URL: postgresql+psycopg://market_desk:market_desk@db:5432/market_desk
+
+services:
+  db:
+    # Postgres 16 with the pgvector extension preinstalled (embeddings in Sprint 3)
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: market_desk
+      POSTGRES_PASSWORD: market_desk   # local-only credentials, never used in the cloud
+      POSTGRES_DB: market_desk
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U market_desk -d market_desk"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # One-off job: apply migrations, then exit. Mirrors the one-off ECS task in Sprint 7.
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:

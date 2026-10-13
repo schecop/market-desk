@@ -18,6 +18,7 @@
 
 ## Checklist
 - [ ] I can explain every line in this PR
+- [ ] Guided exercise done for every task in this PR (logged in the journal)
 - [ ] Tests added or updated; CI green
 - [ ] Sprint journal updated (decisions, concepts, code map, gotchas)
 - [ ] `docs/PLAN.md` checkbox ticked; ADR written if a lasting decision was made

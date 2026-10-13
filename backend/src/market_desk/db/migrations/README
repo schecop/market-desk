@@ -1,0 +1,9 @@
+Alembic migrations: the version history of the database schema.
+
+From backend/ (Postgres running):
+  uv run alembic upgrade head                       apply all pending migrations
+  uv run alembic downgrade -1                       undo the latest one
+  uv run alembic current                            which revision the DB is at
+  uv run alembic history                            list all revisions
+  uv run alembic revision -m "add x"                new empty migration (write upgrade/downgrade by hand)
+  uv run alembic revision --autogenerate -m "x"     diff models vs DB; ALWAYS review the result
