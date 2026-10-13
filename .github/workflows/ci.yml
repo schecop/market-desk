@@ -1,0 +1,75 @@
+# Runs on every pull request and every push to main.
+# Same commands as local development: `make lint` and `make test`.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Least privilege: this workflow only needs to read the code.
+permissions:
+  contents: read
+
+# A newer push to the same PR/branch cancels the run that's now outdated.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, types and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Throwaway Postgres for this job, same image as docker-compose.yml.
+    # The job runs directly on the runner, so it reaches the DB at localhost:5432
+    # through the port mapping (in Compose, containers use the service name `db`).
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: market_desk
+          POSTGRES_PASSWORD: market_desk
+          POSTGRES_DB: market_desk
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U market_desk -d market_desk"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+psycopg://market_desk:market_desk@localhost:5432/market_desk
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.13.0"                       # same uv as local development
+          working-directory: backend
+          enable-cache: true                      # reuse downloaded packages between runs
+          cache-dependency-glob: backend/uv.lock  # new cache whenever the lockfile changes
+
+      - name: Install dependencies
+        working-directory: backend
+        run: uv sync --locked                     # fail if uv.lock is out of date with pyproject.toml
+
+      - name: Lint and type check
+        run: make lint
+
+      - name: Tests
+        run: make test
+
+  docker:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      # Build only, no push: catches a broken Dockerfile on the PR (ADR-0001)
+      - name: Build backend image
+        run: docker build --tag market-desk-api:ci backend
