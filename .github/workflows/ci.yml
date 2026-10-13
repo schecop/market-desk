@@ -52,7 +52,7 @@ jobs:
           version: "0.13.0"                       # same uv as local development
           working-directory: backend
           enable-cache: true                      # reuse downloaded packages between runs
-          cache-dependency-glob: backend/uv.lock  # new cache whenever the lockfile changes
+          cache-dependency-glob: uv.lock          # relative to working-directory; new cache when it changes
 
       - name: Install dependencies
         working-directory: backend
