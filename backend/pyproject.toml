@@ -27,7 +27,8 @@ dev = [
 
 
 [tool.alembic]
-# Migrations ship inside the package (src/market_desk/db/migrations), so the Docker image gets them with the code
-script_location = "%(here)s/src/market_desk/db/migrations"
+# Package notation (package:path), resolved through the installed package: works locally (editable
+# install -> src/) and in the Docker image, which has no src/ folder, only site-packages
+script_location = "market_desk:db:migrations"
 # Date-prefixed file names keep migrations sorted by creation time in the file explorer
 file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s"

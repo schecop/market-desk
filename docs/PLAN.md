@@ -264,7 +264,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [x] `backend/pyproject.toml` with uv; `src/market_desk/` package; FastAPI app with `/health`
 - [x] `docker-compose.yml` with `pgvector/pgvector` Postgres; `/health` checks the DB connection
 - [x] SQLAlchemy session + Alembic initialised (first empty migration)
-- [ ] Multi-stage `Dockerfile` (uv) for the API + `api` service in `docker-compose.yml`; runs migrations on start ([ADR-0001](adr/0001-containerise-api-in-sprint-0.md))
+- [x] Multi-stage `Dockerfile` (uv) for the API + `api` service in `docker-compose.yml`; runs migrations on start ([ADR-0001](adr/0001-containerise-api-in-sprint-0.md))
 - [ ] ruff + mypy + pytest configured in `pyproject.toml`; pre-commit hooks
 - [ ] `Makefile`: `up`, `down`, `test`, `lint`, `fmt`
 - [ ] GitHub Actions: lint + type check + tests on PRs and on `main` (Postgres as a service container)

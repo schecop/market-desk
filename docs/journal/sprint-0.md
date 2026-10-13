@@ -1,6 +1,6 @@
 # Sprint 0 — Scaffold
 
-**Dates:** 2026-10-10 → · **Hours:** ~3.5h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-65h)
+**Dates:** 2026-10-10 → · **Hours:** ~5h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-65h)
 
 ## Goal (in my own words)
 A clean, professional skeleton every later sprint builds on: an installable Python package, a FastAPI service backed by Postgres in Docker, automated lint/type/test checks, and CI on every PR. Everything later depends on it.
@@ -26,6 +26,10 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | 2026-10-11 | Constraint naming convention on `Base.metadata` | Predictable names (`pk_x`, `uq_x_col`) so later migrations can alter/drop constraints | Let Postgres generate names | — |
 | 2026-10-11 | First migration empty; pgvector extension deferred to Sprint 3 | Learn the mechanism first; enable things when they're used | `CREATE EXTENSION vector` in the first migration | — |
 | 2026-10-12 | Stairway test uses `Config("")` + `script_location="market_desk:db:migrations"` (package notation) | Works from any working directory, via the installed package | `Config(toml_file="pyproject.toml")`: reuses real config but path is relative to cwd | — |
+| 2026-10-12 | Multi-stage Dockerfile: uv image builds `.venv`, `python:3.12-slim-bookworm` runs it | Small runtime image without uv or build tools; deps layer cached separately from code | Single stage; `alpine` (musl breaks many wheels); `pip install` (ignores `uv.lock`) | [ADR-0001](../adr/0001-containerise-api-in-sprint-0.md) |
+| 2026-10-12 | Separate one-off `migrate` Compose service; `api` waits for it to exit 0 | No race between API replicas running migrations; mirrors the one-off ECS task in Sprint 7; API never starts on an unexpected schema | `alembic upgrade head && uvicorn ...` in the API's start command | — |
+| 2026-10-12 | `script_location` in package notation (`market_desk:db:migrations`) | Image has no `src/`, only site-packages; one setting works locally, in tests and in the container | Filesystem path + copy `src/` into the image | — |
+| 2026-10-12 | Project installed `--no-editable` in the image | Runtime stage needs only `.venv` | Editable install + copy `src/` | — |
 | 2026-10-12 | Journal published as a site: MkDocs Material on GitHub Pages, one page per task; new Sprint 0 task right after CI | Searchable, visual journal for review; same Markdown as the *Record* step, so nothing to keep in sync; free | Plain Markdown on GitHub; a separate page outside the repo | [ADR-0002](../adr/0002-journal-site-mkdocs-github-pages.md) |
 
 ## Concepts
@@ -84,6 +88,22 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 
 **Stairway test**: `upgrade head -> downgrade base -> upgrade head`. No `assert` needed: a failing migration raises. A `downgrade()` that silently does nothing is caught by the *final* upgrade (`DuplicateTable`), which is why the third step exists.
 
+**Image vs container**: an *image* is the built, read-only template (`docker build`); a *container* is a running instance of it (`docker run`, `compose up`). One image, many containers: `migrate` and `api` run the same image with different commands. Build-time problems show in the build output; runtime problems in `docker compose logs <service>`.
+
+**Layer caching**: each Dockerfile instruction makes a layer. Docker reuses a layer if the instruction **and its inputs** are unchanged; once one layer is rebuilt, **every layer after it is rebuilt too**. So put what changes rarely first: dependency manifests (`pyproject.toml`, `uv.lock`) and install, *then* `COPY` the code. With `COPY . /app` first, any code edit reinstalls every dependency. Read the `CACHED` markers in the build output, not just the time.
+
+**Multi-stage builds**: several `FROM`s in one Dockerfile. Earlier stages build things (with compilers, uv, caches); the final stage copies only the result (`COPY --from=builder`). Smaller image, faster pulls (ECS in Sprint 7), smaller attack surface. Builder and runtime must share OS and Python path, because a venv's `python` is a link to the system interpreter.
+
+**BuildKit mounts**: `--mount=type=bind` makes a file visible during one `RUN` only (not stored in a layer); `--mount=type=cache` keeps a directory (uv's download cache) between builds.
+
+**Container hardening basics**: non-root `USER`; `.dockerignore` keeps `.env` out (a secret copied into a layer stays in the image forever, even if deleted later); `--host 0.0.0.0` because `127.0.0.1` inside a container only accepts connections from inside it; exec-form `CMD ["uvicorn", ...]` so the app is PID 1 and gets `SIGTERM` (graceful stop in ~1s; shell form would wait 10s and then get killed).
+
+**Compose networking**: services share a network where each **service name is a hostname** (`db`). Inside a container, `localhost` is that container. `ports: "5432:5432"` is only for the host (your laptop) to reach a container.
+
+**`depends_on` conditions**: `service_healthy` waits for the healthcheck; `service_completed_successfully` waits for a one-off container to exit with code 0. If `migrate` fails, `api` never starts.
+
+**YAML anchors**: `x-backend: &backend` names a block; `<<: *backend` merges it into a service. Shared config written once.
+
 **pytest fixtures**: a function decorated with `@pytest.fixture` that tests request by parameter name. Code before `yield` is setup, after `yield` is teardown (runs even if the test fails).
 
 ## Code map
@@ -100,7 +120,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | `backend/tests/test_health.py` | Tests `/health` with DB up (real Postgres) and down (overridden engine) | Covers both branches; shows the dependency-override pattern |
 | `backend/tests/test_config.py` | Env var beats default; `get_settings()` caches and `cache_clear()` resets it | My exercise; pins down config behaviour the whole app relies on |
 | `.gitattributes` | Forces LF line endings for every clone | Linux-bound code must not get CRLF |
-| `docker-compose.yml` | Local Postgres 16 + pgvector with volume and healthcheck | Same DB locally as in CI and (RDS) in AWS |
+| `docker-compose.yml` | `db` (Postgres 16 + pgvector), one-off `migrate`, `api` on :8000; shared `x-backend` anchor | `docker compose up -d --build` starts the whole stack in order |
 | `backend/src/market_desk/config.py` | `Settings` (env vars / `.env`) + cached `get_settings()` | One typed place for all config; secrets stay out of code |
 | `backend/src/market_desk/db/engine.py` | Cached SQLAlchemy engine + `database_is_reachable()` | One connection pool per process; health logic testable on its own |
 | `backend/src/market_desk/db/base.py` | `Base` (DeclarativeBase) with constraint naming convention | Parent of every model; predictable constraint names for migrations |
@@ -111,6 +131,8 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | `backend/src/market_desk/db/migrations/versions/` | The migration chain; first: `ce4e8980d9ca` (empty) | Versioned schema history |
 | `backend/tests/test_session.py` | Drives `get_session()` like FastAPI: works, then closed | Proves the cleanup runs |
 | `backend/tests/test_migrations.py` | Stairway test (up -> down -> up) | My exercise; catches broken `downgrade()` on the PR |
+| `backend/Dockerfile` | Multi-stage build: uv builder makes `.venv`, slim non-root runtime runs uvicorn | Same artefact locally, in CI and on ECS (Sprint 7) |
+| `backend/.dockerignore` | Keeps `.venv`, caches, tests and `.env` out of the build context | Smaller context, no secrets in images |
 
 ## Gotchas and bugs
 | Symptom | Cause | Fix | Lesson |
@@ -123,6 +145,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | `alembic current` hangs for minutes | DB unreachable and `env.py`'s engine had no `connect_timeout` (the app's engine did) | `connect_args={"connect_timeout": 3}` in `env.py` | Every DB connection needs a timeout, including one-off tools |
 | `CommandError: No 'script_location' key found` in a test | `Config("../alembic.ini")`: wrong relative path, a missing file silently gives an empty Config, and `script_location` lives in `pyproject.toml` anyway | Package notation `market_desk:db:migrations` | Same relative-path trap as `.env` |
 | Stairway test fails with `DuplicateTable: relation "watchlist" already exists` even after fixing `downgrade()` | An earlier run with `downgrade()` = `pass` left `alembic_version` at base but the table in place | `DROP TABLE watchlist;` by hand | `alembic_version` and the real schema can drift; Alembic trusts the version table |
+| (exercise) `migrate` exits non-zero with `Connection refused`; `api` never starts | `DATABASE_URL` host `localhost`: inside a container that's the container itself | Host = service name `db` | Containers reach each other by service name; `ports:` is for the host only |
 | (avoided) `.env` at repo root ignored when running from `backend/` | `env_file` paths are relative to the current directory | `env_file=("../.env", ".env")` | Relative paths resolve from where you *run*, not where the file lives |
 
 ## Exercises
@@ -130,6 +153,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 |---|---|---|---|---|
 | 2026-10-11 | Tasks 1-2. A: remove `dependency_overrides.clear()`, predict and run tests in reverse order (predict/verify). B: write `tests/test_config.py`, env var overrides default + `get_settings()` caching (write a missing test) | Done: 4 tests pass in every order | Didn't know `monkeypatch`; used `get_settings()` where a fresh `Settings()` was needed (order-dependent, then polluted the cache for the health test); used `==` to check "same object"; in A, blamed the fake URL instead of the leaked dependency override | Shared state (app overrides, caches, env) leaks between tests; test the object directly, not through the cache; `is` for identity |
 | 2026-10-12 | Task 3. A: hand-written `watchlist` migration, predict constraint names, apply, inspect with `\d`, downgrade, delete. B: stairway test with Alembic's command API (write a missing test) | Done: names matched the convention; 6 tests pass; broken `downgrade()` caught by the final upgrade | Imported app code (`get_session`) into a migration; `TIMESTAMP` without time zone and nullable `created_at`; `Config("../alembic.ini")` relative path; used `command.current` as if it checked something | Migrations are frozen history (no app imports); `timestamptz`; `alembic_version` is the only thing Alembic trusts |
+| 2026-10-13 | Dockerfile task. A: move `COPY . /app` above the deps install, predict and observe which steps rerun (break on purpose). B: `localhost` instead of `db` in `DATABASE_URL`, predict and diagnose from `ps -a` and logs | Done: predictions right; stack restored, `/health` 200, 6 tests pass | Said "build crashed" / "api image constructed" for runtime events (image vs container); A: only noted the next step lost cache, not every later one | Order layers by change frequency; image (build) vs container (run); `localhost` in a container is the container |
 
 ## Commands and snippets worth keeping
 ```bash
