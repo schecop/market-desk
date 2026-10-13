@@ -12,7 +12,8 @@ def get_engine() -> Engine:
     """Create the engine once; it manages a pool of connections."""
     return create_engine(
         get_settings().database_url,
-        pool_pre_ping=True,  # test pooled connections before use; drops dead ones after a DB restart
+        # Test pooled connections before use; drops dead ones after a DB restart
+        pool_pre_ping=True,
         connect_args={"connect_timeout": 3},  # fail fast instead of hanging when the DB is down
     )
 

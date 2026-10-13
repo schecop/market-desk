@@ -22,7 +22,10 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "httpx2>=2.13.1",
+    "mypy>=2.4.0",
+    "pre-commit>=4.7.0",
     "pytest>=9.1.1",
+    "ruff>=0.17.0",
 ]
 
 
@@ -32,3 +35,47 @@ dev = [
 script_location = "market_desk:db:migrations"
 # Date-prefixed file names keep migrations sorted by creation time in the file explorer
 file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s"
+
+# Lint and format every newly generated migration, so it passes the same checks as hand-written code
+[[tool.alembic.post_write_hooks]]
+name = "ruff_fix"
+type = "module"
+module = "ruff"
+options = "check --fix REVISION_SCRIPT_FILENAME"
+
+[[tool.alembic.post_write_hooks]]
+name = "ruff_format"
+type = "module"
+module = "ruff"
+options = "format REVISION_SCRIPT_FILENAME"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle: style errors and warnings
+    "F",       # pyflakes: real errors (unused imports, undefined names)
+    "I",       # isort: import order
+    "UP",      # pyupgrade: modern syntax for the target Python
+    "B",       # flake8-bugbear: likely bugs and design problems
+    "SIM",     # flake8-simplify: simpler equivalent code
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Alembic's template imports `sa` and `op` in every migration, used or not
+"src/market_desk/db/migrations/versions/*.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+# Warnings fail the run, so deprecations get fixed instead of scrolling past.
+# Silence a specific warning here only with a comment saying why.
+filterwarnings = ["error"]

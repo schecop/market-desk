@@ -1,6 +1,6 @@
 # Sprint 0 — Scaffold
 
-**Dates:** 2026-10-10 → · **Hours:** ~5h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-65h)
+**Dates:** 2026-10-10 → · **Hours:** ~6h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-65h)
 
 ## Goal (in my own words)
 A clean, professional skeleton every later sprint builds on: an installable Python package, a FastAPI service backed by Postgres in Docker, automated lint/type/test checks, and CI on every PR. Everything later depends on it.
@@ -30,6 +30,12 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | 2026-10-12 | Separate one-off `migrate` Compose service; `api` waits for it to exit 0 | No race between API replicas running migrations; mirrors the one-off ECS task in Sprint 7; API never starts on an unexpected schema | `alembic upgrade head && uvicorn ...` in the API's start command | — |
 | 2026-10-12 | `script_location` in package notation (`market_desk:db:migrations`) | Image has no `src/`, only site-packages; one setting works locally, in tests and in the container | Filesystem path + copy `src/` into the image | — |
 | 2026-10-12 | Project installed `--no-editable` in the image | Runtime stage needs only `.venv` | Editable install + copy `src/` | — |
+| 2026-10-13 | ruff for lint + format (rules E, W, F, I, UP, B, SIM; line length 100) | One fast tool replaces black, isort, flake8 and plugins | black + isort + flake8 | — |
+| 2026-10-13 | mypy `strict = true` from day one, with the Pydantic plugin | Cheapest while the codebase is tiny; enabling later means hundreds of errors at once | Non-strict mypy; pyright | — |
+| 2026-10-13 | pytest `filterwarnings = ["error"]` | Deprecations fail the run instead of scrolling past (the `httpx` warning in task 1 would have been caught) | Default: warnings only printed | — |
+| 2026-10-13 | pre-commit Python hooks as `repo: local` via `uv run --directory backend` | Same ruff/mypy versions as `uv.lock`; mypy sees the real dependencies | `ruff-pre-commit` / `mirrors-mypy` repos (second version to sync; isolated mypy reports false errors) | — |
+| 2026-10-13 | pytest not in pre-commit | Needs Postgres and takes seconds; runs in `make test` and CI | Run tests on every commit | — |
+| 2026-10-13 | Unused imports allowed only in `migrations/versions/` + Alembic post-write hooks run ruff on new migrations | Template always imports `sa`/`op`; generated files still pass every other check | Edit the template per migration; ignore migrations entirely | — |
 | 2026-10-12 | Journal published as a site: MkDocs Material on GitHub Pages, one page per task; new Sprint 0 task right after CI | Searchable, visual journal for review; same Markdown as the *Record* step, so nothing to keep in sync; free | Plain Markdown on GitHub; a separate page outside the repo | [ADR-0002](../adr/0002-journal-site-mkdocs-github-pages.md) |
 
 ## Concepts
@@ -104,6 +110,14 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 
 **YAML anchors**: `x-backend: &backend` names a block; `<<: *backend` merges it into a service. Shared config written once.
 
+**Linter vs formatter vs type checker**: a *linter* (`ruff check`) finds likely bugs and bad patterns (unused imports, mutable default args); a *formatter* (`ruff format`) rewrites layout so style is never discussed; a *type checker* (`mypy`) proves the annotations are consistent across every code path. None of them run the code.
+
+**What mypy strict catches, and what it can't**: tests check the inputs you thought of; mypy checks every path for every type. The planted bug `return conn.execute(...).scalar()` in a `-> bool` function passed all 6 tests (`1` is truthy) but failed mypy with `[no-any-return]`; a query returning `0`/`NULL` would have made `/health` say 503 for a healthy DB. Don't trust mypy's "Success" past `Any` (untyped libraries, `# type: ignore`, `cast`), for logic errors (a wrong `bool` is still a `bool`), or for runtime data (JSON, env, DB rows): that's Pydantic's job.
+
+**pre-commit**: a framework that installs a git hook (`.git/hooks/pre-commit`) running configured checks on `git commit`. A hook that *modifies* files counts as failed on purpose: the fix isn't staged yet, so you review it and `git add` again. `.git/hooks` isn't versioned: every clone runs `pre-commit install` once. Hooks can be skipped (`--no-verify`), so CI runs the same checks again in a clean environment from the lockfile, plus the tests.
+
+**pytest config**: `filterwarnings = ["error"]` turns warnings into failures; `--strict-markers` makes a misspelled marker an error; `-ra` prints a summary of skips/failures.
+
 **pytest fixtures**: a function decorated with `@pytest.fixture` that tests request by parameter name. Code before `yield` is setup, after `yield` is teardown (runs even if the test fails).
 
 ## Code map
@@ -113,7 +127,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | `CLAUDE.md` | Rules for Claude Code sessions | Tutor mode + learning protocol |
 | `PROGRESS.md` | Session log | Where we are and the next step |
 | `docs/journal/` | Learning trace per sprint | Decisions, concepts, code map, bugs, kept for later |
-| `backend/pyproject.toml` | Project metadata, runtime deps, dev group, build backend, `[tool.alembic]` | Single source for deps and (soon) tool config |
+| `backend/pyproject.toml` | Project metadata, runtime deps, dev group, build backend, `[tool.alembic]` (+ ruff post-write hooks), `[tool.ruff]`, `[tool.mypy]`, `[tool.pytest.ini_options]` | Single source for deps and (soon) tool config |
 | `backend/uv.lock` | Exact pinned versions of every dependency | Reproducible installs locally, in CI and in Docker |
 | `backend/.python-version` | Pins Python 3.12 for uv | Everyone (and CI) runs the same interpreter |
 | `backend/src/market_desk/api/main.py` | FastAPI `app` + `GET /health` (readiness, uses DB) | Entry point uvicorn serves; home of all routers later |
@@ -133,6 +147,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | `backend/tests/test_migrations.py` | Stairway test (up -> down -> up) | My exercise; catches broken `downgrade()` on the PR |
 | `backend/Dockerfile` | Multi-stage build: uv builder makes `.venv`, slim non-root runtime runs uvicorn | Same artefact locally, in CI and on ECS (Sprint 7) |
 | `backend/.dockerignore` | Keeps `.venv`, caches, tests and `.env` out of the build context | Smaller context, no secrets in images |
+| `.pre-commit-config.yaml` | Hooks on `git commit`: hygiene checks, ruff check/format, mypy (via `uv run`) | Problems blocked before a commit exists |
 
 ## Gotchas and bugs
 | Symptom | Cause | Fix | Lesson |
@@ -146,6 +161,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | `CommandError: No 'script_location' key found` in a test | `Config("../alembic.ini")`: wrong relative path, a missing file silently gives an empty Config, and `script_location` lives in `pyproject.toml` anyway | Package notation `market_desk:db:migrations` | Same relative-path trap as `.env` |
 | Stairway test fails with `DuplicateTable: relation "watchlist" already exists` even after fixing `downgrade()` | An earlier run with `downgrade()` = `pass` left `alembic_version` at base but the table in place | `DROP TABLE watchlist;` by hand | `alembic_version` and the real schema can drift; Alembic trusts the version table |
 | (exercise) `migrate` exits non-zero with `Connection refused`; `api` never starts | `DATABASE_URL` host `localhost`: inside a container that's the container itself | Host = service name `db` | Containers reach each other by service name; `ports:` is for the host only |
+| (exercise) 6 tests green, mypy `Returning Any from function declared to return "bool" [no-any-return]` | `.scalar()` returns `Any`; `/health` only checks truthiness, and `1` is truthy | Return `True` after a successful query (or `scalar_one() == 1`) | Tests see the inputs you tried; types cover every path |
 | (avoided) `.env` at repo root ignored when running from `backend/` | `env_file` paths are relative to the current directory | `env_file=("../.env", ".env")` | Relative paths resolve from where you *run*, not where the file lives |
 
 ## Exercises
@@ -154,6 +170,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | 2026-10-11 | Tasks 1-2. A: remove `dependency_overrides.clear()`, predict and run tests in reverse order (predict/verify). B: write `tests/test_config.py`, env var overrides default + `get_settings()` caching (write a missing test) | Done: 4 tests pass in every order | Didn't know `monkeypatch`; used `get_settings()` where a fresh `Settings()` was needed (order-dependent, then polluted the cache for the health test); used `==` to check "same object"; in A, blamed the fake URL instead of the leaked dependency override | Shared state (app overrides, caches, env) leaks between tests; test the object directly, not through the cache; `is` for identity |
 | 2026-10-12 | Task 3. A: hand-written `watchlist` migration, predict constraint names, apply, inspect with `\d`, downgrade, delete. B: stairway test with Alembic's command API (write a missing test) | Done: names matched the convention; 6 tests pass; broken `downgrade()` caught by the final upgrade | Imported app code (`get_session`) into a migration; `TIMESTAMP` without time zone and nullable `created_at`; `Config("../alembic.ini")` relative path; used `command.current` as if it checked something | Migrations are frozen history (no app imports); `timestamptz`; `alembic_version` is the only thing Alembic trusts |
 | 2026-10-13 | Dockerfile task. A: move `COPY . /app` above the deps install, predict and observe which steps rerun (break on purpose). B: `localhost` instead of `db` in `DATABASE_URL`, predict and diagnose from `ps -a` and logs | Done: predictions right; stack restored, `/health` 200, 6 tests pass | Said "build crashed" / "api image constructed" for runtime events (image vs container); A: only noted the next step lost cache, not every later one | Order layers by change frequency; image (build) vs container (run); `localhost` in a container is the container |
+| 2026-10-13 | Lint/type task. A: find and fix a planted bug from mypy output (fix a bug). B: commit a badly formatted file and watch pre-commit block it (break on purpose) | Done: mypy clean, 6 passed; commit blocked, ruff fixed the file | Explained the bug as "no False returned"; the core issue is `Any` where `bool` is promised, and falsy-but-valid results (`0`/`NULL`) giving a false 503 | Green tests ≠ correct types; modifying hooks fail on purpose so you review the fix |
 
 ## Commands and snippets worth keeping
 ```bash
