@@ -1,6 +1,6 @@
 # Sprint 0 — Scaffold
 
-**Dates:** 2026-10-10 → · **Hours:** ~6h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-65h)
+**Dates:** 2026-10-10 → · **Hours:** ~7.5h · **Plan:** [docs/PLAN.md, Sprint 0](../PLAN.md#sprint-0--scaffold-65h)
 
 ## Goal (in my own words)
 A clean, professional skeleton every later sprint builds on: an installable Python package, a FastAPI service backed by Postgres in Docker, automated lint/type/test checks, and CI on every PR. Everything later depends on it.
@@ -36,6 +36,12 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | 2026-10-13 | pre-commit Python hooks as `repo: local` via `uv run --directory backend` | Same ruff/mypy versions as `uv.lock`; mypy sees the real dependencies | `ruff-pre-commit` / `mirrors-mypy` repos (second version to sync; isolated mypy reports false errors) | — |
 | 2026-10-13 | pytest not in pre-commit | Needs Postgres and takes seconds; runs in `make test` and CI | Run tests on every commit | — |
 | 2026-10-13 | Unused imports allowed only in `migrations/versions/` + Alembic post-write hooks run ruff on new migrations | Template always imports `sa`/`op`; generated files still pass every other check | Edit the template per migration; ignore migrations entirely | — |
+| 2026-10-13 | `Makefile` as the single entry point; GNU make installed with `winget install ezwinports.make` | CI calls `make lint`/`make test`, so local and CI checks can't drift; `make` is on every Linux runner | `just`; `poe`/`tox`; PowerShell scripts (Windows-only); `mingw32-make` (different name); msys64 on PATH (shadows Windows tools) | — |
+| 2026-10-13 | `lint` only checks, `fmt` rewrites | CI must fail on bad formatting, not fix it in a throwaway runner | One target that formats and checks | — |
+| 2026-10-14 | CI: one `checks` job (Postgres service container, `make lint` + `make test`) and a parallel `docker` build job | Real DB in CI; broken Dockerfile caught on the PR (ADR-0001) | Raw `uv run` commands in YAML; Python version matrix (app pinned to 3.12) | — |
+| 2026-10-14 | Actions pinned by tag (`checkout@v7`, `setup-uv@v10.3.0`); uv pinned to `0.13.0` in CI | Reproducible runs; readable. Hardening later: pin by commit SHA (a tag can be moved to malicious code) | SHA pinning now; floating latest uv | — |
+| 2026-10-14 | Read-only `GITHUB_TOKEN`, 15-min job timeouts, cancel outdated runs | Least privilege; a hung test can't burn hours of minutes | Defaults (write token, 6h timeout) | — |
+| 2026-10-14 | First PR as a draft into `main` covering tasks 1-6; journal site, branch protection and README in later PRs | Draft runs CI but signals "not ready"; one reviewable unit for the scaffold | One PR per task (would have needed to start on day 1) | — |
 | 2026-10-12 | Journal published as a site: MkDocs Material on GitHub Pages, one page per task; new Sprint 0 task right after CI | Searchable, visual journal for review; same Markdown as the *Record* step, so nothing to keep in sync; free | Plain Markdown on GitHub; a separate page outside the repo | [ADR-0002](../adr/0002-journal-site-mkdocs-github-pages.md) |
 
 ## Concepts
@@ -118,6 +124,18 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 
 **pytest config**: `filterwarnings = ["error"]` turns warnings into failures; `--strict-markers` makes a misspelled marker an error; `-ra` prints a summary of skips/failures.
 
+**Make essentials**: a target is assumed to be a **file** to build; `.PHONY` marks it as a command name, otherwise a file or folder called `test` makes `make test` print "up to date" and silently run nothing. `target: a b` = **prerequisites**: `a` then `b` run first (left to right normally; possibly in parallel with `make -j`), then the target's own recipe. Each recipe line runs in a **new shell** (a `cd` doesn't carry over: write `cd backend && ...`), and make stops at the first failing line. Recipe lines must start with a **tab**. If a Makefile must call itself, use `$(MAKE)`, not `make`, so the name and flags (`-n`, `-j`) carry over.
+
+**GitHub Actions anatomy**: a *workflow* (`.github/workflows/*.yml`) runs on *events* (`on: pull_request`, `push`). It has *jobs*, each on a fresh VM (*runner*), running in parallel unless linked by `needs:`. A job has *steps*: `uses:` runs a published action, `run:` runs shell commands. `services:` starts containers (our Postgres) before the steps; the steps run on the runner itself, so they reach a service at `localhost:<mapped port>` (in Compose it was the service name `db`). All `uses:` actions are downloaded before the first step, so a bad action reference fails the job in ~1s with no steps run.
+
+**Action versions are maintainer conventions**: `actions/checkout@v7` works because its maintainers move a `v7` tag along with each release; `astral-sh/setup-uv` publishes exact tags only (`v10.3.0`), so `@v10` doesn't exist. Exact versions (or commit SHAs) are the safer habit anyway: a moving tag can change between two runs.
+
+**Reading a failed run from the terminal**: `gh pr checks <n> --watch` waits for the result; `gh run view <run-id> --log-failed` shows only the failed steps; read the **last** `##[error]` line, everything above is runner setup.
+
+**What pre-commit can't catch**: hooks check *the commit*, not the repo. They're skipped with `--no-verify`, they don't run on machines where `pre-commit install` wasn't run, and once a broken file is committed, a later commit that doesn't stage it passes the hooks. CI checks the whole repo on every push, in a clean environment built from `uv.lock`.
+
+**CI caching**: setup-uv stores downloaded packages under a key that includes a hash of `uv.lock`, so a dependency change gets a fresh cache and nothing else does. The cache is saved only after a **successful** job, so the first green run after a key change saves it and the next run restores it.
+
 **pytest fixtures**: a function decorated with `@pytest.fixture` that tests request by parameter name. Code before `yield` is setup, after `yield` is teardown (runs even if the test fails).
 
 ## Code map
@@ -148,6 +166,8 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | `backend/Dockerfile` | Multi-stage build: uv builder makes `.venv`, slim non-root runtime runs uvicorn | Same artefact locally, in CI and on ECS (Sprint 7) |
 | `backend/.dockerignore` | Keeps `.venv`, caches, tests and `.env` out of the build context | Smaller context, no secrets in images |
 | `.pre-commit-config.yaml` | Hooks on `git commit`: hygiene checks, ruff check/format, mypy (via `uv run`) | Problems blocked before a commit exists |
+| `Makefile` | `help`, `install`, `up`, `down`, `dev`, `test`, `lint`, `fmt`, `check` | One name per everyday command; CI calls the same targets |
+| `.github/workflows/ci.yml` | PR + `main` CI: lint/types/tests against a Postgres service container; Docker build job | Every change checked in a clean environment before merge |
 
 ## Gotchas and bugs
 | Symptom | Cause | Fix | Lesson |
@@ -162,6 +182,9 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | Stairway test fails with `DuplicateTable: relation "watchlist" already exists` even after fixing `downgrade()` | An earlier run with `downgrade()` = `pass` left `alembic_version` at base but the table in place | `DROP TABLE watchlist;` by hand | `alembic_version` and the real schema can drift; Alembic trusts the version table |
 | (exercise) `migrate` exits non-zero with `Connection refused`; `api` never starts | `DATABASE_URL` host `localhost`: inside a container that's the container itself | Host = service name `db` | Containers reach each other by service name; `ports:` is for the host only |
 | (exercise) 6 tests green, mypy `Returning Any from function declared to return "bool" [no-any-return]` | `.scalar()` returns `Any`; `/health` only checks truthiness, and `1` is truthy | Return `True` after a successful query (or `scalar_one() == 1`) | Tests see the inputs you tried; types cover every path |
+| CI job fails in 1s with no steps: `Unable to resolve action astral-sh/setup-uv@v10, unable to find version v10` | That repo publishes exact tags only; I assumed it had a moving major tag like `actions/checkout` | `setup-uv@v10.3.0` | Check an action's tags (`gh api repos/<owner>/<repo>/git/matching-refs/tags/v10`) before pinning |
+| CI cache key ends in `no-dependency-glob` | setup-uv resolves `cache-dependency-glob` relative to `working-directory`: `backend/uv.lock` became `backend/backend/uv.lock` | `cache-dependency-glob: uv.lock` | Third tool with the same relative-path trap (`.env`, `alembic.ini`, now this) |
+| A commit passes pre-commit while the repo has a lint error | Python hooks only trigger when a `.py` file is staged; the broken file was committed earlier with `--no-verify` | CI caught it; fixed in a new commit | Hooks check the commit, CI checks the repo |
 | (avoided) `.env` at repo root ignored when running from `backend/` | `env_file` paths are relative to the current directory | `env_file=("../.env", ".env")` | Relative paths resolve from where you *run*, not where the file lives |
 
 ## Exercises
@@ -171,6 +194,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | 2026-10-12 | Task 3. A: hand-written `watchlist` migration, predict constraint names, apply, inspect with `\d`, downgrade, delete. B: stairway test with Alembic's command API (write a missing test) | Done: names matched the convention; 6 tests pass; broken `downgrade()` caught by the final upgrade | Imported app code (`get_session`) into a migration; `TIMESTAMP` without time zone and nullable `created_at`; `Config("../alembic.ini")` relative path; used `command.current` as if it checked something | Migrations are frozen history (no app imports); `timestamptz`; `alembic_version` is the only thing Alembic trusts |
 | 2026-10-13 | Dockerfile task. A: move `COPY . /app` above the deps install, predict and observe which steps rerun (break on purpose). B: `localhost` instead of `db` in `DATABASE_URL`, predict and diagnose from `ps -a` and logs | Done: predictions right; stack restored, `/health` 200, 6 tests pass | Said "build crashed" / "api image constructed" for runtime events (image vs container); A: only noted the next step lost cache, not every later one | Order layers by change frequency; image (build) vs container (run); `localhost` in a container is the container |
 | 2026-10-13 | Lint/type task. A: find and fix a planted bug from mypy output (fix a bug). B: commit a badly formatted file and watch pre-commit block it (break on purpose) | Done: mypy clean, 6 passed; commit blocked, ruff fixed the file | Explained the bug as "no False returned"; the core issue is `Any` where `bool` is promised, and falsy-but-valid results (`0`/`NULL`) giving a false 503 | Green tests ≠ correct types; modifying hooks fail on purpose so you review the fix |
+| 2026-10-14 | Makefile + CI (shared). A: add `make check` using prerequisites. B: commit an unused import with `--no-verify`, push, watch PR #1 go red, diagnose with `gh run view --log-failed`, fix (break on purpose) | Done with help: diagnosis right (checks job, "Lint and type check" step, `F401` + `I001`); Claude wrote the final `check: lint test` line and the `config.py` fix on request | A: used sub-make calls (`make lint` / `make test` in the recipe) instead of prerequisites, and plain `make` instead of `$(MAKE)`; B: said Docker passed because it runs on another VM in parallel, but the reason is that it never runs ruff (unused imports are valid Python) | Prerequisites, not sub-makes; hooks can be bypassed and only see the commit, CI sees the repo |
 
 ## Commands and snippets worth keeping
 ```bash

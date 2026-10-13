@@ -266,8 +266,8 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [x] SQLAlchemy session + Alembic initialised (first empty migration)
 - [x] Multi-stage `Dockerfile` (uv) for the API + `api` service in `docker-compose.yml`; runs migrations on start ([ADR-0001](adr/0001-containerise-api-in-sprint-0.md))
 - [x] ruff + mypy + pytest configured in `pyproject.toml`; pre-commit hooks
-- [ ] `Makefile`: `up`, `down`, `test`, `lint`, `fmt`
-- [ ] GitHub Actions: lint + type check + tests on PRs and on `main` (Postgres as a service container)
+- [x] `Makefile`: `up`, `down`, `test`, `lint`, `fmt`
+- [x] GitHub Actions: lint + type check + tests on PRs and on `main` (Postgres as a service container)
 - [ ] Journal site: MkDocs Material on GitHub Pages, one page per task, deployed by a GitHub Actions workflow on push to `main` ([ADR-0002](adr/0002-journal-site-mkdocs-github-pages.md))
 - [ ] Branch protection on `main`: PR + green CI required
 - [ ] README: one-paragraph pitch + "Status: Sprint 0"

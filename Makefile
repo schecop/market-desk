@@ -3,7 +3,7 @@
 # Recipe lines MUST start with a tab, not spaces ("missing separator" error otherwise).
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down dev test lint fmt
+.PHONY: help install up down dev test lint fmt check
 
 help:
 	@echo Targets:
@@ -14,6 +14,7 @@ help:
 	@echo   make test     - run the test suite (needs the db container)
 	@echo   make lint     - check lint, formatting and types; never changes files (used by CI)
 	@echo   make fmt      - format code and apply safe lint fixes (changes files)
+	@echo   make check    - lint, then tests (what CI checks)
 
 install:
 	cd backend && uv sync
@@ -39,3 +40,6 @@ lint:
 fmt:
 	cd backend && uv run ruff format .
 	cd backend && uv run ruff check --fix .
+
+# Prerequisites run first, left to right: lint, then test. No recipe of its own.
+check: lint test
