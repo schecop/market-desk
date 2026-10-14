@@ -16,7 +16,7 @@ A clean, professional skeleton every later sprint builds on: an installable Pyth
 | 6 | Makefile | [Makefile](06-makefile.md) |
 | 7 | GitHub Actions CI | [CI](07-ci.md) |
 | 8 | Journal site (MkDocs Material, GitHub Pages) | [Journal site](08-journal-site.md) |
-| 9 | Branch protection on `main` | — |
+| 9 | Branch protection on `main` | [Branch protection](09-branch-protection.md) |
 | 10 | README pitch + status | — |
 
 ## Sprint-level decisions

@@ -60,3 +60,7 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [Job-level permissions and conditions](../sprint-0/08-journal-site.md#job-level-permissions-and-conditions) · *8. Journal site*
 - [Path filters](../sprint-0/08-journal-site.md#path-filters) · *8. Journal site*
 - [Non-default dependency groups](../sprint-0/08-journal-site.md#non-default-dependency-groups) · *8. Journal site*
+- [Server-side vs client-side enforcement](../sprint-0/09-branch-protection.md#server-side-vs-client-side-enforcement) · *9. Branch protection*
+- [Rulesets](../sprint-0/09-branch-protection.md#rulesets) · *9. Branch protection*
+- [Required status checks are matched by name](../sprint-0/09-branch-protection.md#required-status-checks-are-matched-by-name) · *9. Branch protection*
+- ["Up to date" before merging](../sprint-0/09-branch-protection.md#up-to-date-before-merging) · *9. Branch protection*

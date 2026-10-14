@@ -35,6 +35,7 @@ nav:
           - 6. Makefile: journal/sprint-0/06-makefile.md
           - 7. CI: journal/sprint-0/07-ci.md
           - 8. Journal site: journal/sprint-0/08-journal-site.md
+          - 9. Branch protection: journal/sprint-0/09-branch-protection.md
       - Review:
           - Concepts: journal/review/concepts.md
           - Gotchas: journal/review/gotchas.md

@@ -52,5 +52,8 @@ make doesn't have its own shell: it hands each recipe line to one. GNU make on W
 ## Guided exercise
 Shared with task 7 (add `make check`; break CI on purpose): see [task 7's page](07-ci.md#guided-exercise).
 
+!!! note "The `make help` fix (2026-10-14)"
+    Its guided exercise is shared with task 9: see [task 9's page](09-branch-protection.md#guided-exercise).
+
 ## Explain it in 2 minutes
 The Makefile is the project's menu of commands: `make up` starts the stack, `make test` runs the tests, `make lint` checks without changing anything, `make fmt` fixes formatting, and `make check` is lint then tests, exactly what CI runs. CI calls these same targets instead of repeating raw commands in YAML, so there's one definition of "the checks". The make details that matter: targets are files unless marked `.PHONY`, each recipe line is a fresh shell, and prerequisites run before the target, which is how `check: lint test` works with no recipe of its own.
