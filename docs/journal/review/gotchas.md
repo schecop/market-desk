@@ -26,3 +26,4 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [The build prints a long warning from the Material team about MkDocs 2.0](../sprint-0/08-journal-site.md#gotchas) · *8. Journal site*
 - [Local preview at `http://127.0.0.1:8001/` shows nothing; the server says `Serving on http://127.0.0.1:8001/market-desk/`](../sprint-0/08-journal-site.md#gotchas) · *8. Journal site*
 - [pre-commit's `check-yaml` fails on `mkdocs.yml`: `could not determine a constructor for the tag ...python/name:...`](../sprint-0/08-journal-site.md#gotchas) · *8. Journal site*
+- [The rule I asked for doesn't match what the API returns](../sprint-0/09-branch-protection.md#gotchas) · *9. Branch protection*

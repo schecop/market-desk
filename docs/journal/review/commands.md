@@ -58,6 +58,8 @@ uv run alembic revision --autogenerate -m "msg"   # diff models vs DB; always re
 gh pr checks <n> --watch                                       # wait for a PR's CI result
 gh run view <run-id> --log-failed                              # only the failed steps' logs
 gh api repos/<owner>/<repo>/git/matching-refs/tags/v10         # which tags an action really has
+gh api repos/<owner>/<repo>/rulesets                            # list rulesets; add /<id> for one in full
+gh api repos/<owner>/<repo>/commits/<sha>/check-runs            # check names and the app that reported them
 gh api repos/<owner>/<repo>/pages                               # Pages config (build_type: workflow = GitHub Actions)
 uvx --from actionlint-py actionlint .github/workflows/*.yml     # static check of workflow files
 ```
