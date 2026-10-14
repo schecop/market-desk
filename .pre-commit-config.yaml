@@ -13,6 +13,9 @@ repos:
         args: [--markdown-linebreak-ext=md]  # two trailing spaces are a line break in Markdown
       - id: end-of-file-fixer
       - id: check-yaml
+        # mkdocs.yml uses a !!python/name: tag the safe loader rejects; `make docs-build` validates it
+        # instead. Excluding one file beats --unsafe, which would weaken the check for every YAML file.
+        exclude: ^mkdocs\.yml$
       - id: check-toml
       - id: check-added-large-files
         args: [--maxkb=500]

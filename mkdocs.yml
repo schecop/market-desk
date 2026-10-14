@@ -1,0 +1,94 @@
+# MkDocs Material site for the learning journal, plan and ADRs (ADR-0002).
+# Source of truth stays the Markdown in docs/; this file only says how to render it.
+# Build locally with `make docs-serve` (live reload) or `make docs-build` (strict, like CI).
+
+site_name: Market Desk — Learning Journal
+site_description: What was built, why, and what was learned while building Market Desk.
+site_author: Pablo Sala
+site_url: https://schecop.github.io/market-desk/
+repo_url: https://github.com/schecop/market-desk
+repo_name: schecop/market-desk
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+# Templates are for copying, not reading
+exclude_docs: |
+  journal/_template*.md
+  adr/0000-template.md
+
+# Broken #anchors are only INFO by default, so --strict would let them through. Make them warnings.
+validation:
+  links:
+    anchors: warn
+
+nav:
+  - Home: index.md
+  - Journal:
+      - journal/README.md
+      - Sprint 0 — Scaffold:
+          - journal/sprint-0/index.md
+          - 1. Package and health: journal/sprint-0/01-package-and-health.md
+          - 2. Postgres and readiness: journal/sprint-0/02-postgres-and-readiness.md
+          - 3. SQLAlchemy and Alembic: journal/sprint-0/03-sqlalchemy-and-alembic.md
+          - 4. Dockerfile: journal/sprint-0/04-dockerfile.md
+          - 5. Lint, types, pre-commit: journal/sprint-0/05-lint-types-precommit.md
+          - 6. Makefile: journal/sprint-0/06-makefile.md
+          - 7. CI: journal/sprint-0/07-ci.md
+          - 8. Journal site: journal/sprint-0/08-journal-site.md
+      - Review:
+          - Concepts: journal/review/concepts.md
+          - Gotchas: journal/review/gotchas.md
+          - Commands: journal/review/commands.md
+          - Pages by tag: journal/review/tags.md
+  - Decisions (ADRs):
+      - ADR-0001 Containerise the API: adr/0001-containerise-api-in-sprint-0.md
+      - ADR-0002 Journal site: adr/0002-journal-site-mkdocs-github-pages.md
+  - Plan: PLAN.md
+
+theme:
+  name: material
+  language: en
+  palette:
+    # Follow the OS setting, with a toggle to override it
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections   # top-level nav entries become labelled groups in the sidebar
+    - navigation.indexes    # a section's README/index page is the section's landing page
+    - navigation.top        # "back to top" button
+    - search.highlight      # highlight the search term on the page you land on
+    - content.code.copy     # copy button on code blocks
+    - content.action.edit   # "edit this page" link to GitHub
+
+plugins:
+  - search
+  - tags
+
+markdown_extensions:
+  - toc:
+      permalink: true       # anchor link next to every heading
+  - tables
+  - attr_list               # {: .class } attributes, used by Material for buttons/icons
+  - md_in_html              # Markdown inside HTML blocks
+  - admonition              # !!! note / tip / warning boxes
+  - pymdownx.details        # ??? question — collapsible boxes: hidden answers for self-testing
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tasklist:      # render PLAN.md's [ ] / [x] as checkboxes
+      custom_checkbox: true
+  - pymdownx.superfences:   # nested code blocks, plus ```mermaid diagrams
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format

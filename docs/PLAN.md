@@ -2,7 +2,7 @@
 
 > The single source of truth for this project. If you are starting fresh (new day, new machine, new Claude Code session, after weeks away), start at **Section 1**.
 
-**Status lives in [`PROGRESS.md`](../PROGRESS.md).** This file holds the plan; tick its checkboxes as you go.
+**Status lives in [`PROGRESS.md`](https://github.com/schecop/market-desk/blob/main/PROGRESS.md).** This file holds the plan; tick its checkboxes as you go.
 
 | | |
 |---|---|
@@ -38,7 +38,7 @@
 
 ### End of every session (5-10 minutes)
 1. Tick the boxes you finished in this file.
-2. Update the sprint journal (`docs/journal/sprint-N.md`): decisions, concepts, code map, gotchas from this session.
+2. Update the journal (`docs/journal/sprint-N/`, one page per task): decisions, concepts, code map, gotchas, check questions from this session.
 3. Add a `PROGRESS.md` entry: date, what you did, what you learned, **the exact next step**, blockers, hours spent.
 4. Commit any finished task that is still uncommitted (only once its guided exercise is done), then push. **Never leave `main` with red CI.**
 
@@ -48,7 +48,7 @@ This is a hands-on learning project, so understanding matters more than speed. F
 | Record | Where |
 |---|---|
 | Where we are, next step, what I learned this session | `PROGRESS.md` |
-| Decisions (with alternatives), concepts, code map, bugs | `docs/journal/sprint-N.md` |
+| Decisions (with alternatives), concepts, code map, bugs, check questions | `docs/journal/sprint-N/`, one page per task (published as the journal site) |
 | Lasting architectural decisions | `docs/adr/` |
 | Why each change was made | commit bodies and PR descriptions (`.github/pull_request_template.md`) |
 
@@ -268,7 +268,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [x] ruff + mypy + pytest configured in `pyproject.toml`; pre-commit hooks
 - [x] `Makefile`: `up`, `down`, `test`, `lint`, `fmt`
 - [x] GitHub Actions: lint + type check + tests on PRs and on `main` (Postgres as a service container)
-- [ ] Journal site: MkDocs Material on GitHub Pages, one page per task, deployed by a GitHub Actions workflow on push to `main` ([ADR-0002](adr/0002-journal-site-mkdocs-github-pages.md))
+- [x] Journal site: MkDocs Material on GitHub Pages, one page per task, deployed by a GitHub Actions workflow on push to `main` ([ADR-0002](adr/0002-journal-site-mkdocs-github-pages.md))
 - [ ] Branch protection on `main`: PR + green CI required
 - [ ] README: one-paragraph pitch + "Status: Sprint 0"
 

@@ -21,3 +21,4 @@ Option 1, as a Sprint 0 task right after the GitHub Actions CI task. The site is
 - Existing entries in `docs/journal/sprint-0.md` are migrated to the new layout in that task; until then they keep being written there.
 - Later ADR numbers in `docs/PLAN.md` shift by one (client design is now ADR-0003, through deployment design as ADR-0006).
 - `docs/PLAN.md` sections 5, 7 and 8 updated.
+- *Added 2026-10-14:* MkDocs 2.0 drops the plugin and theme systems Material depends on, with no migration path ([Material team's analysis](https://squidfunk.github.io/mkdocs-material/blog/2026/02/18/mkdocs-2.0/)). The `docs` group pins `mkdocs>=1.6,<2` so an upgrade can't break the site. If MkDocs 1.x stops being viable, the content (plain Markdown) is unaffected; only the build tool changes, e.g. to Zensical, the Material team's successor, which reads `mkdocs.yml`.
