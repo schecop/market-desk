@@ -1,0 +1,26 @@
+# Gotchas
+
+Every bug and surprise, by symptom, linking to the task page with the cause, fix and lesson. Useful when something looks familiar: search this page for the error message.
+
+<!-- Add one line per new gotcha: [Symptom](../sprint-N/NN-page.md#gotchas) · *Task title*. -->
+
+## Sprint 0 — Scaffold
+- [`StarletteDeprecationWarning: Using httpx with starlette.testclient is deprecated`](../sprint-0/01-package-and-health.md#gotchas) · *1. Package and health endpoint*
+- [`uv` / `gh`: "command not found" right after installing](../sprint-0/01-package-and-health.md#gotchas) · *1. Package and health endpoint*
+- ["LF will be replaced by CRLF" warnings on `git add`](../sprint-0/01-package-and-health.md#gotchas) · *1. Package and health endpoint*
+- [Health test fails with `ArgumentError: Could not parse SQLAlchemy URL`, only when run after the config test](../sprint-0/02-postgres-and-readiness.md#gotchas) · *2. Postgres and a readiness check*
+- [Every `docker` command returns `500 Internal Server Error ... dockerDesktopLinuxEngine`](../sprint-0/02-postgres-and-readiness.md#gotchas) · *2. Postgres and a readiness check*
+- [(avoided) `.env` at repo root ignored when running from `backend/`](../sprint-0/02-postgres-and-readiness.md#gotchas) · *2. Postgres and a readiness check*
+- [`alembic current` hangs for minutes](../sprint-0/03-sqlalchemy-and-alembic.md#gotchas) · *3. SQLAlchemy sessions and Alembic*
+- [`CommandError: No 'script_location' key found` in a test](../sprint-0/03-sqlalchemy-and-alembic.md#gotchas) · *3. SQLAlchemy sessions and Alembic*
+- [Stairway test fails with `DuplicateTable: relation "watchlist" already exists` even after fixing `downgrade()`](../sprint-0/03-sqlalchemy-and-alembic.md#gotchas) · *3. SQLAlchemy sessions and Alembic*
+- [(exercise) `migrate` exits non-zero with `Connection refused`; `api` never starts](../sprint-0/04-dockerfile.md#gotchas) · *4. Dockerfile and the containerised stack*
+- [(exercise) 6 tests green, mypy `Returning Any from function declared to return "bool" [no-any-return]`](../sprint-0/05-lint-types-precommit.md#gotchas) · *5. Lint, types, test config and pre-commit*
+- [CI job fails in 1s with no steps: `Unable to resolve action astral-sh/setup-uv@v10, unable to find version v10`](../sprint-0/07-ci.md#gotchas) · *7. GitHub Actions CI*
+- [CI cache key ends in `no-dependency-glob`](../sprint-0/07-ci.md#gotchas) · *7. GitHub Actions CI*
+- [A commit passes pre-commit while the repo has a lint error](../sprint-0/07-ci.md#gotchas) · *7. GitHub Actions CI*
+- [First strict build fails: `Doc file 'PLAN.md' contains a link '../PROGRESS.md', but the target is not found`](../sprint-0/08-journal-site.md#gotchas) · *8. Journal site*
+- [A broken `#anchor` link passes `--strict`](../sprint-0/08-journal-site.md#gotchas) · *8. Journal site*
+- [The build prints a long warning from the Material team about MkDocs 2.0](../sprint-0/08-journal-site.md#gotchas) · *8. Journal site*
+- [Local preview at `http://127.0.0.1:8001/` shows nothing; the server says `Serving on http://127.0.0.1:8001/market-desk/`](../sprint-0/08-journal-site.md#gotchas) · *8. Journal site*
+- [pre-commit's `check-yaml` fails on `mkdocs.yml`: `could not determine a constructor for the tag ...python/name:...`](../sprint-0/08-journal-site.md#gotchas) · *8. Journal site*

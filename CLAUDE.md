@@ -6,7 +6,7 @@ Market Desk is a personal learning-by-building project by Pablo Sala: a multi-cl
 - **`docs/PLAN.md` is the source of truth**: background, architecture, tech stack, budget, and the 9 sprints with checklists.
 - **`PROGRESS.md` says where we are**: newest entry first.
 
-- **`docs/journal/sprint-N.md` is the learning trace**: decisions, concepts, code map, bugs, per sprint.
+- **`docs/journal/` is the learning trace**: one folder per sprint (`sprint-N/`), one page per task, published as the journal site (`make docs-serve` to preview).
 
 ## Learning protocol (applies to every action, boilerplate included)
 This is a learning project first. Pablo must always know what is being done, why, and what code exists. Speed is secondary.
@@ -16,12 +16,15 @@ This is a learning project first. Pablo must always know what is being done, why
 3. **One task at a time.** Small steps Pablo can follow; don't batch unrelated changes.
 4. **Check understanding.** After a piece works, ask Pablo one or two short questions (predict a behaviour, explain an edge case, what breaks if X changes). Keep it brief, not an exam.
 5. **Give a guided exercise.** After the check questions, give Pablo a hands-on task to do himself, tied to what was just built (see "Task lifecycle" below). The task is finished only when he completes it successfully.
-6. **Record as you go**, in `docs/journal/sprint-N.md`:
-   - every decision with real alternatives → Decisions log (date, decision, why, alternatives); lasting architectural ones (library, provider, data model, architecture) also get an ADR in `docs/adr/`
-   - every new concept → Concepts, written so Pablo can re-read it months later
+6. **Record as you go**, on the task's page `docs/journal/sprint-N/NN-<slug>.md` (copied from `_template-task.md`; sprint-wide decisions go on `sprint-N/index.md`):
+   - every decision with real alternatives → Decisions (date, decision, why, alternatives); lasting architectural ones (library, provider, data model, architecture) also get an ADR in `docs/adr/`
+   - every new concept → Concepts, one `###` each, written so Pablo can re-read it months later; plus a link line in `review/concepts.md`
    - every new or changed file that matters → Code map (file, what it does, why it exists)
-   - every bug or surprise → Gotchas (symptom, cause, fix)
-   - every guided exercise → Exercises (task, outcome, what I got wrong, lesson)
+   - every bug or surprise → Gotchas, a `!!! bug` box (symptom, cause, fix, lesson); plus a link line in `review/gotchas.md`
+   - every check question → Check questions, a `??? question` box with the answer hidden
+   - every guided exercise → Guided exercise (task, outcome, what I got wrong, lesson)
+   - a command worth keeping → `review/commands.md`
+   - new pages go in the `nav` of `mkdocs.yml`; `make docs-build` must pass (it fails on broken links and anchors)
 7. **Never commit on your own.** Changes stay uncommitted until the task lifecycle below is complete and Pablo says to commit, so he can review the whole change (`git status`, `git diff`) first. Then propose the commit message and commit only on his go-ahead. Commit bodies say why, not just what. PRs use `.github/pull_request_template.md` (what, why, how, decisions, learned, verified).
 8. **When a task is finished**, summarise in 3-5 lines: what was built, the key decision, the concept learned, and where it's recorded.
 
@@ -32,7 +35,7 @@ This is a learning project first. Pablo must always know what is being done, why
 4. **Check questions**: one or two, short.
 5. **Guided exercise**: Pablo does it himself (rules below).
 6. **Verify**: tests, ruff and mypy green; Claude reviews Pablo's exercise code and points out issues without rewriting it.
-7. **Record**: journal (decisions, concepts, code map, gotchas, exercise), tick the PLAN checkbox. Once the journal site task is done ([ADR-0002](docs/adr/0002-journal-site-mkdocs-github-pages.md)), this means one page per task in the site layout instead of rows in `sprint-N.md`.
+7. **Record**: the task's journal page (decisions, concepts, code map, gotchas, check questions, exercise, explain it in 2 minutes) and the review pages ([ADR-0002](docs/adr/0002-journal-site-mkdocs-github-pages.md)), tick the PLAN checkbox.
 8. **Commit** only when Pablo says so: show `git status`, propose a conventional commit message with a why-body, then commit.
 
 ### Guided exercise rules

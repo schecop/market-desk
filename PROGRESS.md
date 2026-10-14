@@ -8,7 +8,7 @@ Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md
 <!-- Template (copy above the latest entry):
 ## YYYY-MM-DD · Sprint N · Xh
 - **Done:** ...
-- **Learned:** key concept(s); details in docs/journal/sprint-N.md
+- **Learned:** key concept(s); details in docs/journal/sprint-N/
 - **Next step:** the exact first thing to do next session
 - **Blockers / notes:** ...
 -->

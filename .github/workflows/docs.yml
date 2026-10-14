@@ -1,0 +1,74 @@
+# Builds the journal site on PRs (strict: broken links fail the PR) and deploys it to
+# GitHub Pages on push to main (ADR-0002). Separate from ci.yml: different triggers, and
+# only the deploy job gets write permissions.
+name: Docs
+
+on:
+  pull_request:
+    paths: &docs-paths
+      - "docs/**"
+      - "mkdocs.yml"
+      - "Makefile"                  # docs-build recipe
+      - "backend/pyproject.toml"    # docs dependency group
+      - "backend/uv.lock"           # locked MkDocs / Material versions
+      - ".github/workflows/docs.yml"
+  push:
+    branches: [main]
+    paths: *docs-paths
+  workflow_dispatch:                # manual "Run workflow" button, e.g. for the first deploy
+
+# Default for every job: read the code, nothing else. The deploy job widens this for itself.
+permissions:
+  contents: read
+
+# Outdated PR builds are cancelled; a deploy on main is never cut off halfway.
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build site (strict)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      UV_LOCKED: "1"                      # like `uv sync --locked`: fail if uv.lock is out of date
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0  # exact tags only, see ci.yml
+        with:
+          version: "0.13.0"
+          working-directory: backend
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Build
+        run: make docs-build              # mkdocs build --strict, output in site/
+
+      # Packs site/ as the special artifact deploy-pages expects (a tar named github-pages).
+      # Uploaded on PRs too, so a PR's built site can be downloaded from the run page.
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build                          # only after a green strict build
+    if: github.ref == 'refs/heads/main'   # PRs build, only main deploys
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Job-level permissions replace the workflow default for this job only.
+    permissions:
+      pages: write                        # publish to Pages
+      id-token: write                     # OIDC token proving the request comes from this repo's workflow
+    # Deployment history and the live URL show up under the repo's Environments.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
