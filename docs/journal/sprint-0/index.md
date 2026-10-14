@@ -1,6 +1,6 @@
 # Sprint 0 — Scaffold
 
-**Dates:** 2026-10-10 → · **Hours:** ~7.5h · **Plan:** [PLAN.md, Sprint 0](../../PLAN.md#sprint-0-scaffold-65h)
+**Dates:** 2026-10-10 → 2026-10-14 · **Hours:** ~9h (estimate 6.5h) · **Plan:** [PLAN.md, Sprint 0](../../PLAN.md#sprint-0-scaffold-65h)
 
 ## Goal (in my own words)
 A clean, professional skeleton every later sprint builds on: an installable Python package, a FastAPI service backed by Postgres in Docker, automated lint/type/test checks, and CI on every PR. Everything later depends on it.
@@ -50,3 +50,10 @@ Files that belong to the project rather than to one task.
 - [ ] Stairway test runs `downgrade base` on the **dev** DB: harmless now, wipes local data from Sprint 1. Options: separate `market_desk_test` database for pytest, or run that test only in CI. Decide before Sprint 1's first model.
 
 ## Retrospective (at sprint end)
+**What I built:** the foundations of the project: a clean, verified and consistent repository, with its environment, directories, checks, tests and workflows.
+
+**A decision and why:** checks at every layer from day one: pre-commit, strict mypy, CI on every PR, and branch protection that makes CI mandatory. Green workflows and tests show we're building from a good baseline, and that's a mature-project mindset, not an afterthought.
+
+**A problem and how I solved it:** migrations were the hardest part, because the concept was new to me. Reading about them and testing them (writing the `watchlist` migration by hand, then the stairway test) gave me a much clearer picture.
+
+**What I'd do differently:** go faster, and not stop to approve steps I already know from doing them once. Sprint 0 took ~9h against a 6.5h estimate (~1.4×), much of it from per-step approval round-trips and the journal migration.
