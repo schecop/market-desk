@@ -2,8 +2,8 @@
 
 Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md`](docs/PLAN.md).
 
-**Current sprint:** Sprint 0 — Scaffold (6 of 9 tasks done)
-**Hours so far:** ~7.5 / ~89
+**Current sprint:** Sprint 1 — Integrations layer (not started; Sprint 0 done, 10 of 10 tasks)
+**Hours so far:** ~9 / ~90.5
 
 <!-- Template (copy above the latest entry):
 ## YYYY-MM-DD · Sprint N · Xh
@@ -12,6 +12,12 @@ Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md
 - **Next step:** the exact first thing to do next session
 - **Blockers / notes:** ...
 -->
+
+## 2026-10-14 · Sprint 0 · ~1.5h (evening session)
+- **Done:** Sprint 0 finished. Task 8: journal site (MkDocs Material on GitHub Pages, one page per task, review pages, strict builds with anchor checks, `docs.yml` deploying with OIDC), live at https://schecop.github.io/market-desk/ (PR #3). Fix: `make help` failed in Git Bash (PR #4). Task 9: ruleset `protect-main` (PR + both CI checks required, pinned to GitHub Actions, no bypass), created in the UI (PR #5). Task 10: README status, badges and a quick start tested on a fresh clone (PR #6). Retrospective written.
+- **Learned:** static sites and strict builds as link checkers; OIDC deploys and job-level permissions; `needs:` vs `if:`; path filters and why a path-filtered check can't be *required*; which shell make uses (`cmd` vs `sh`); rulesets and required checks matched by job name; the fresh-clone test. Details in `docs/journal/sprint-0/` (tasks 8-10).
+- **Next step:** Sprint 1, task 1. Before the first model: decide on a separate test database (the stairway test wipes the dev DB; open question in the Sprint 0 overview).
+- **Blockers / notes:** task 9's exercise parts 1-2 (shell outputs, the direct-push rejection) were predicted but not run. `ubuntu-latest` moves to Ubuntu 26 on 2026-10-19: if CI turns red for no visible reason, suspect that first. Working preference from the retro: fewer approval stops for steps already done once.
 
 ## 2026-10-14 · Sprint 0 · ~7.5h (sessions 10-14 Oct)
 - **Done:** Sprint 0 tasks 1-6, merged to `main` in PR #1 with green CI: uv package with `src/` layout and FastAPI `/health` (503 when the DB is down); Postgres + pgvector in Docker Compose; SQLAlchemy sessions and Alembic (first empty migration, stairway test); multi-stage Dockerfile with a one-off `migrate` service (ADR-0001); ruff, mypy strict, pytest warnings-as-errors, pre-commit; `Makefile`; GitHub Actions (lint, types, tests against a Postgres service container, Docker build). Tooling installed: uv, gh, GNU make.
