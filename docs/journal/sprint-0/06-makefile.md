@@ -14,6 +14,7 @@ One short name for every everyday command (`make up`, `make test`, `make lint`, 
 | Date | Decision | Why | Alternatives considered | ADR |
 |---|---|---|---|---|
 | 2026-10-13 | `Makefile` as the single entry point; GNU make installed with `winget install ezwinports.make` | CI calls `make lint`/`make test`, so local and CI checks can't drift; `make` is on every Linux runner | `just`; `poe`/`tox`; PowerShell scripts (Windows-only); `mingw32-make` (different name); msys64 on PATH (shadows Windows tools) | — |
+| 2026-10-14 | `help` text without shell-special characters (`( ) ; & \| < >`, quotes) | The same line must work in `cmd` and `sh`; plain text is the only common subset | Quote the strings (`cmd` prints the quotes); make's `$(info ...)` (no shell, but loses the indentation) | — |
 | 2026-10-13 | `lint` only checks, `fmt` rewrites | CI must fail on bad formatting, not fix it in a throwaway runner | One target that formats and checks | — |
 
 ## Concepts
@@ -21,10 +22,19 @@ One short name for every everyday command (`make up`, `make test`, `make lint`, 
 ### Make essentials
 A target is assumed to be a **file** to build; `.PHONY` marks it as a command name, otherwise a file or folder called `test` makes `make test` print "up to date" and silently run nothing. `target: a b` = **prerequisites**: `a` then `b` run first (left to right normally; possibly in parallel with `make -j`), then the target's own recipe. Each recipe line runs in a **new shell** (a `cd` doesn't carry over: write `cd backend && ...`), and make stops at the first failing line. Recipe lines must start with a **tab**. If a Makefile must call itself, use `$(MAKE)`, not `make`, so the name and flags (`-n`, `-j`) carry over.
 
+### Which shell runs a recipe
+make doesn't have its own shell: it hands each recipe line to one. GNU make on Windows uses `sh.exe` if it finds one on PATH (Git Bash has it) and falls back to `cmd` otherwise (PowerShell sessions here). Linux and CI always use `sh`. Quoting rules differ: in `sh`, `(` starts a subshell, `;` ends a command and unquoted spaces collapse; in `cmd`, `echo` prints everything literally, quotes included. A recipe that must run everywhere sticks to plain text, or to commands that behave the same in both.
+
 ## Code map
 | File | What it does | Why it exists / why this way |
 |---|---|---|
 | `Makefile` | `help`, `install`, `up`, `down`, `dev`, `test`, `lint`, `fmt`, `check` | One name per everyday command; CI calls the same targets |
+
+## Gotchas
+!!! bug "(found 2026-10-14) `make help` in Git Bash: `syntax error near unexpected token '('`"
+    **Cause:** from Git Bash make runs recipes in `sh`, where the unquoted `(fresh clone)` is shell syntax. From PowerShell it uses `cmd`, which prints it as-is, so the bug went unnoticed. The `lint` line's `;` would have been next: `sh` would try to run a command called `never`.
+    **Fix:** reworded the help lines without `( ) ;`, plus a comment in the Makefile saying why.
+    **Lesson:** "works in my shell" isn't "works": test a cross-platform Makefile from each shell it claims to support.
 
 ## Check questions
 !!! note "Reconstructed"

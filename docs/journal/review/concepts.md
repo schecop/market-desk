@@ -45,6 +45,7 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [pre-commit](../sprint-0/05-lint-types-precommit.md#pre-commit) · *5. Lint, types, test config and pre-commit*
 - [pytest config](../sprint-0/05-lint-types-precommit.md#pytest-config) · *5. Lint, types, test config and pre-commit*
 - [Make essentials](../sprint-0/06-makefile.md#make-essentials) · *6. Makefile*
+- [Which shell runs a recipe](../sprint-0/06-makefile.md#which-shell-runs-a-recipe) · *6. Makefile*
 - [GitHub Actions anatomy](../sprint-0/07-ci.md#github-actions-anatomy) · *7. GitHub Actions CI*
 - [Action versions are maintainer conventions](../sprint-0/07-ci.md#action-versions-are-maintainer-conventions) · *7. GitHub Actions CI*
 - [Reading a failed run from the terminal](../sprint-0/07-ci.md#reading-a-failed-run-from-the-terminal) · *7. GitHub Actions CI*
