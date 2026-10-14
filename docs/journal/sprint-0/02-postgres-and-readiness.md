@@ -75,6 +75,11 @@ A cached function keeps its result across tests. `get_settings.cache_clear()` em
     **Fix:** quit and reopen Docker Desktop, `docker compose up -d`; data survives in the volume.
     **Lesson:** tell "my code is broken" apart from "my tools are broken".
 
+!!! bug "(2026-10-14) 3 DB tests fail with `ConnectionTimeout`; `docker compose ps` shows no containers"
+    **Cause:** `db` and `api` both `Exited (255)` at the same moment: the Docker Desktop engine stopped or restarted underneath them (sleep, update or crash), not the app. The first `make up` afterwards also failed, probably while the engine was still starting (its output wasn't kept).
+    **Fix:** `docker compose ps -a` to see the exit codes, then `make up` again; data survives in the volume.
+    **Lesson:** several containers exiting with 255 at once points at the engine; check `ps -a` before debugging the tests.
+
 !!! bug "(avoided) `.env` at repo root ignored when running from `backend/`"
     **Cause:** `env_file` paths are relative to the current directory.
     **Fix:** `env_file=("../.env", ".env")`.

@@ -10,12 +10,14 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - ["LF will be replaced by CRLF" warnings on `git add`](../sprint-0/01-package-and-health.md#gotchas) · *1. Package and health endpoint*
 - [Health test fails with `ArgumentError: Could not parse SQLAlchemy URL`, only when run after the config test](../sprint-0/02-postgres-and-readiness.md#gotchas) · *2. Postgres and a readiness check*
 - [Every `docker` command returns `500 Internal Server Error ... dockerDesktopLinuxEngine`](../sprint-0/02-postgres-and-readiness.md#gotchas) · *2. Postgres and a readiness check*
+- [(2026-10-14) 3 DB tests fail with `ConnectionTimeout`; `docker compose ps` shows no containers](../sprint-0/02-postgres-and-readiness.md#gotchas) · *2. Postgres and a readiness check*
 - [(avoided) `.env` at repo root ignored when running from `backend/`](../sprint-0/02-postgres-and-readiness.md#gotchas) · *2. Postgres and a readiness check*
 - [`alembic current` hangs for minutes](../sprint-0/03-sqlalchemy-and-alembic.md#gotchas) · *3. SQLAlchemy sessions and Alembic*
 - [`CommandError: No 'script_location' key found` in a test](../sprint-0/03-sqlalchemy-and-alembic.md#gotchas) · *3. SQLAlchemy sessions and Alembic*
 - [Stairway test fails with `DuplicateTable: relation "watchlist" already exists` even after fixing `downgrade()`](../sprint-0/03-sqlalchemy-and-alembic.md#gotchas) · *3. SQLAlchemy sessions and Alembic*
 - [(exercise) `migrate` exits non-zero with `Connection refused`; `api` never starts](../sprint-0/04-dockerfile.md#gotchas) · *4. Dockerfile and the containerised stack*
 - [(exercise) 6 tests green, mypy `Returning Any from function declared to return "bool" [no-any-return]`](../sprint-0/05-lint-types-precommit.md#gotchas) · *5. Lint, types, test config and pre-commit*
+- [(found 2026-10-14) `make help` in Git Bash: `syntax error near unexpected token '('`](../sprint-0/06-makefile.md#gotchas) · *6. Makefile*
 - [CI job fails in 1s with no steps: `Unable to resolve action astral-sh/setup-uv@v10, unable to find version v10`](../sprint-0/07-ci.md#gotchas) · *7. GitHub Actions CI*
 - [CI cache key ends in `no-dependency-glob`](../sprint-0/07-ci.md#gotchas) · *7. GitHub Actions CI*
 - [A commit passes pre-commit while the repo has a lint error](../sprint-0/07-ci.md#gotchas) · *7. GitHub Actions CI*

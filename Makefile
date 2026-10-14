@@ -1,22 +1,24 @@
 # Shortcuts for the commands used every day. CI calls the same targets (lint, test),
 # so the checks are defined once. Recipes work in cmd, PowerShell, Git Bash and Linux.
 # Recipe lines MUST start with a tab, not spaces ("missing separator" error otherwise).
+# make runs recipes in cmd from PowerShell but in sh from Git Bash and Linux, so the echo text
+# below stays plain: no ( ) ; & | < > or quotes, which one of the two shells would misread.
 
 .DEFAULT_GOAL := help
 .PHONY: help install up down dev test lint fmt check docs-serve docs-build
 
 help:
 	@echo Targets:
-	@echo   make install  - install dependencies and the git pre-commit hook (fresh clone)
-	@echo   make up       - build and start db, migrate and api in Docker (API on :8000)
-	@echo   make down     - stop and remove the containers (the database volume is kept)
-	@echo   make dev      - run the API locally with auto-reload (needs the db container)
-	@echo   make test     - run the test suite (needs the db container)
-	@echo   make lint     - check lint, formatting and types; never changes files (used by CI)
-	@echo   make fmt      - format code and apply safe lint fixes (changes files)
-	@echo   make check    - lint, then tests (what CI checks)
+	@echo   make install    - fresh clone: install dependencies and the git pre-commit hook
+	@echo   make up         - build and start db, migrate and api in Docker, API on port 8000
+	@echo   make down       - stop and remove the containers, keeping the database volume
+	@echo   make dev        - run the API locally with auto-reload, needs the db container
+	@echo   make test       - run the test suite, needs the db container
+	@echo   make lint       - check lint, formatting and types, never changes files - used by CI
+	@echo   make fmt        - format code and apply safe lint fixes - changes files
+	@echo   make check      - lint, then tests: what CI checks
 	@echo   make docs-serve - preview the journal site with live reload: http://127.0.0.1:8001/market-desk/
-	@echo   make docs-build - build the site into site/, failing on any warning (used by CI)
+	@echo   make docs-build - build the site into site/, failing on any warning - used by CI
 
 install:
 	cd backend && uv sync
