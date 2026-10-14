@@ -270,7 +270,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [x] GitHub Actions: lint + type check + tests on PRs and on `main` (Postgres as a service container)
 - [x] Journal site: MkDocs Material on GitHub Pages, one page per task, deployed by a GitHub Actions workflow on push to `main` ([ADR-0002](adr/0002-journal-site-mkdocs-github-pages.md))
 - [x] Branch protection on `main`: PR + green CI required
-- [ ] README: one-paragraph pitch + "Status: Sprint 0"
+- [x] README: one-paragraph pitch + "Status: Sprint 0"
 
 **Done when:** `docker compose up` gives a `/health` endpoint backed by Postgres, and CI is green on a PR.
 

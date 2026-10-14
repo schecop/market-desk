@@ -27,3 +27,6 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [Local preview at `http://127.0.0.1:8001/` shows nothing; the server says `Serving on http://127.0.0.1:8001/market-desk/`](../sprint-0/08-journal-site.md#gotchas) · *8. Journal site*
 - [pre-commit's `check-yaml` fails on `mkdocs.yml`: `could not determine a constructor for the tag ...python/name:...`](../sprint-0/08-journal-site.md#gotchas) · *8. Journal site*
 - [The rule I asked for doesn't match what the API returns](../sprint-0/09-branch-protection.md#gotchas) · *9. Branch protection*
+- [I said the badge would show any branch's latest run without `?branch=main`](../sprint-0/10-readme.md#gotchas) · *10. README*
+- [Cleaning up the fresh clone removed `market-desk-api:latest`, the image the real repo uses](../sprint-0/10-readme.md#gotchas) · *10. README*
+- [`make help | head -3` ends with `make: *** [Makefile:14: help] Error 3328`](../sprint-0/10-readme.md#gotchas) · *10. README*

@@ -64,3 +64,6 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [Rulesets](../sprint-0/09-branch-protection.md#rulesets) · *9. Branch protection*
 - [Required status checks are matched by name](../sprint-0/09-branch-protection.md#required-status-checks-are-matched-by-name) · *9. Branch protection*
 - ["Up to date" before merging](../sprint-0/09-branch-protection.md#up-to-date-before-merging) · *9. Branch protection*
+- [The README as a landing page](../sprint-0/10-readme.md#the-readme-as-a-landing-page) · *10. README*
+- [Status badges](../sprint-0/10-readme.md#status-badges) · *10. README*
+- [The fresh-clone test](../sprint-0/10-readme.md#the-fresh-clone-test) · *10. README*
