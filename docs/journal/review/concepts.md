@@ -67,3 +67,10 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [The README as a landing page](../sprint-0/10-readme.md#the-readme-as-a-landing-page) · *10. README*
 - [Status badges](../sprint-0/10-readme.md#status-badges) · *10. README*
 - [The fresh-clone test](../sprint-0/10-readme.md#the-fresh-clone-test) · *10. README*
+
+## Sprint 1 — Integrations layer
+- [`SecretStr`](../sprint-1/01-cala-signup.md#secretstr) · *1. Cala sign-up and API key*
+- [One key per environment](../sprint-1/01-cala-signup.md#one-key-per-environment) · *1. Cala sign-up and API key*
+- [Reading an OpenAPI spec](../sprint-1/01-cala-signup.md#reading-an-openapi-spec) · *1. Cala sign-up and API key*
+- [Field validators: `before` vs `after`](../sprint-1/01-cala-signup.md#field-validators-before-vs-after) · *1. Cala sign-up and API key*
+- [Type narrowing](../sprint-1/01-cala-signup.md#type-narrowing) · *1. Cala sign-up and API key*

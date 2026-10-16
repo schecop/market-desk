@@ -30,3 +30,7 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [I said the badge would show any branch's latest run without `?branch=main`](../sprint-0/10-readme.md#gotchas) · *10. README*
 - [Cleaning up the fresh clone removed `market-desk-api:latest`, the image the real repo uses](../sprint-0/10-readme.md#gotchas) · *10. README*
 - [`make help | head -3` ends with `make: *** [Makefile:14: help] Error 3328`](../sprint-0/10-readme.md#gotchas) · *10. README*
+
+## Sprint 1 — Integrations layer
+- [The key loaded but had length 0](../sprint-1/01-cala-signup.md#gotchas) · *1. Cala sign-up and API key*
+- [Two error shapes in one API](../sprint-1/01-cala-signup.md#gotchas) · *1. Cala sign-up and API key*

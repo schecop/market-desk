@@ -295,7 +295,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 **Tech:** httpx, tenacity, Pydantic v2, respx, n8n (Docker), Slack incoming webhook.
 
 **Tasks:**
-- [ ] Sign up for Cala's free tier; read its API docs; store the key in `.env`
+- [x] Sign up for Cala's free tier; read its API docs; store the key in `.env`
 - [ ] `clients/cala.py`: typed client (auth header, timeouts, retries with backoff on 429/5xx, `Retry-After`, pagination, custom exceptions); **write it yourself**
 - [ ] `clients/edgar.py`: company lookup (ticker → CIK), filings list, filing document fetch; required User-Agent; client-side rate limiting; local response cache for development
 - [ ] Unit tests with respx: success, pagination, 429 then success, 500 exhausting retries, timeout, malformed JSON
