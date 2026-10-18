@@ -1,0 +1,22 @@
+{
+  // Project-level settings only. Personal preferences (theme, font, format on save) belong in user settings.
+
+  // The uv venv lives in backend/, not at the repo root, so VS Code can't find it on its own.
+  // Windows path; on Linux/macOS pick backend/.venv/bin/python once with "Python: Select Interpreter".
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/Scripts/python.exe",
+
+  // Ruff formats and lints Python, using the venv's ruff and backend/pyproject.toml (same as CI).
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "ruff.importStrategy": "fromEnvironment",
+
+  // mypy runs from backend/ so it reads [tool.mypy] (strict + pydantic plugin) from pyproject.toml.
+  "mypy-type-checker.importStrategy": "fromEnvironment",
+  "mypy-type-checker.cwd": "${workspaceFolder}/backend",
+
+  // Testing panel: same pytest config as `make test`.
+  "python.testing.pytestEnabled": true,
+  "python.testing.cwd": "${workspaceFolder}/backend",
+  "python.testing.pytestArgs": ["tests"]
+}
