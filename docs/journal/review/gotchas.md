@@ -34,3 +34,9 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 ## Sprint 1 — Integrations layer
 - [The key loaded but had length 0](../sprint-1/01-cala-signup.md#gotchas) · *1. Cala sign-up and API key*
 - [Two error shapes in one API](../sprint-1/01-cala-signup.md#gotchas) · *1. Cala sign-up and API key*
+- [The `transport` parameter was accepted but never used](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
+- [Tests changed to match the code instead of the requirement](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
+- [My own skeleton test contradicted the rule](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
+- [`staticmethod` used with a non-method, and the client lost two methods](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
+- [`object list can't be used in 'await' expression`, deep inside httpx2](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
+- [Only two relationship types worked](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*

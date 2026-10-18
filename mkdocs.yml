@@ -40,6 +40,7 @@ nav:
       - Sprint 1 — Integrations:
           - journal/sprint-1/index.md
           - 1. Cala sign-up and API key: journal/sprint-1/01-cala-signup.md
+          - 2. Cala client: journal/sprint-1/02-cala-client.md
       - Review:
           - Concepts: journal/review/concepts.md
           - Gotchas: journal/review/gotchas.md
@@ -48,6 +49,7 @@ nav:
   - Decisions (ADRs):
       - ADR-0001 Containerise the API: adr/0001-containerise-api-in-sprint-0.md
       - ADR-0002 Journal site: adr/0002-journal-site-mkdocs-github-pages.md
+      - ADR-0003 HTTP client design: adr/0003-http-client-design.md
   - Plan: PLAN.md
 
 theme:

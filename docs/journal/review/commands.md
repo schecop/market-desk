@@ -63,3 +63,10 @@ gh api repos/<owner>/<repo>/commits/<sha>/check-runs            # check names an
 gh api repos/<owner>/<repo>/pages                               # Pages config (build_type: workflow = GitHub Actions)
 uvx --from actionlint-py actionlint .github/workflows/*.yml     # static check of workflow files
 ```
+
+## pytest
+```bash
+uv run pytest tests/test_cala_retries.py -q            # one file, quiet
+uv run pytest tests/test_cala_errors.py -q -k 422      # only tests whose name matches "422"
+uv run pytest -q 2>&1 | grep -E "^E |FAILED"           # just the assertion lines and failed test names
+```

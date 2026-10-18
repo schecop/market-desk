@@ -74,3 +74,18 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [Reading an OpenAPI spec](../sprint-1/01-cala-signup.md#reading-an-openapi-spec) · *1. Cala sign-up and API key*
 - [Field validators: `before` vs `after`](../sprint-1/01-cala-signup.md#field-validators-before-vs-after) · *1. Cala sign-up and API key*
 - [Type narrowing](../sprint-1/01-cala-signup.md#type-narrowing) · *1. Cala sign-up and API key*
+- [Dependency injection (the transport)](../sprint-1/02-cala-client.md#dependency-injection-the-transport) · *2. Cala client*
+- [`classmethod` as an alternative constructor](../sprint-1/02-cala-client.md#classmethod-as-an-alternative-constructor) · *2. Cala client*
+- [Async context manager (`async with`)](../sprint-1/02-cala-client.md#async-context-manager-async-with) · *2. Cala client*
+- [Exceptions that carry data](../sprint-1/02-cala-client.md#exceptions-that-carry-data) · *2. Cala client*
+- [Exception chaining (`raise ... from err`)](../sprint-1/02-cala-client.md#exception-chaining-raise-from-err) · *2. Cala client*
+- [Status code first, body second](../sprint-1/02-cala-client.md#status-code-first-body-second) · *2. Cala client*
+- [Generic functions (`def f[M: BaseModel]`)](../sprint-1/02-cala-client.md#generic-functions-def-fm-basemodel) · *2. Cala client*
+- [Language server (LSP)](../sprint-1/index.md#language-server-lsp) · *Sprint 1, outside a task*
+- [Retrying with tenacity](../sprint-1/02-cala-client.md#retrying-with-tenacity) · *2. Cala client*
+- [Decorator vs object configuration](../sprint-1/02-cala-client.md#decorator-vs-object-configuration) · *2. Cala client*
+- [Idempotency](../sprint-1/02-cala-client.md#idempotency) · *2. Cala client*
+- [Directed relationships in a knowledge graph](../sprint-1/02-cala-client.md#directed-relationships-in-a-knowledge-graph) · *2. Cala client*
+- [`Literal` types](../sprint-1/02-cala-client.md#literal-types) · *2. Cala client*
+- [`Field(default_factory=...)`](../sprint-1/02-cala-client.md#fielddefault_factory) · *2. Cala client*
+- [Model order and forward references](../sprint-1/02-cala-client.md#model-order-and-forward-references) · *2. Cala client*

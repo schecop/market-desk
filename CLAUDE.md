@@ -67,7 +67,7 @@ Boilerplate may be generated (config files, Dockerfiles, CI workflows, Terraform
 - Everything here is public and written as a personal learning project: docs talk about the product and what was learned.
 - Never commit secrets. Keys go in `.env` (gitignored); add new keys to `.env.example` with the sprint that introduced them.
 - Respect the budget (~€20-30/month, `docs/PLAN.md` section 6): Haiku for evals, small eval sets, no always-on cloud resources; the AWS stack is destroyed when not demoing.
-- Tests must never call live external APIs in CI (mock with respx).
+- Tests must never call live external APIs in CI (inject `httpx2.MockTransport`; ADR-0003).
 - Claude API models: `claude-sonnet-5-5` for the agent, `claude-haiku-5-5` for cheap steps and judging.
 
 ## On session end

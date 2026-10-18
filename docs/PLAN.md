@@ -150,8 +150,8 @@ One product touches all of this in a realistic way: an agent that real users tal
 | API | FastAPI, Pydantic v2 | Typed request/response models give OpenAPI docs for free |
 | DB access | SQLAlchemy 2 + Alembic | Industry standard ORM and migrations |
 | Database | Postgres 16 + pgvector | One database for app data, embeddings and full-text (BM25-style) search |
-| HTTP | httpx, tenacity | Sync/async client; declarative retries with backoff |
-| Test mocks | respx | Mock httpx calls so CI never hits live APIs |
+| HTTP | httpx2 (async), tenacity | Maintained successor of httpx; declarative retries with backoff (ADR-0003) |
+| Test mocks | `httpx2.MockTransport` | Injected fake transport so CI never hits live APIs; respx only patches `httpx` (ADR-0003) |
 | Quality | pytest, ruff, mypy, pre-commit | Tests, lint/format, types, enforced before commit |
 | CI/CD | GitHub Actions | Free for public repos; OIDC to AWS in Sprint 7 |
 | Journal site | MkDocs Material on GitHub Pages | Searchable learning journal built from the Markdown in `docs/journal/`; free hosting, deployed by GitHub Actions ([ADR-0002](adr/0002-journal-site-mkdocs-github-pages.md)) |
@@ -292,23 +292,23 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - **An "SDK"** is a thin, typed client: request building, auth, retries and error mapping in one place, returning Pydantic models instead of raw JSON.
 - **Webhooks:** inbound means you verify the signature and respond fast (queue the work); outbound means you sign your payload and retry on failure.
 
-**Tech:** httpx, tenacity, Pydantic v2, respx, n8n (Docker), Slack incoming webhook.
+**Tech:** httpx2, tenacity, Pydantic v2, `MockTransport`, n8n (Docker), Slack incoming webhook.
 
 **Tasks:**
 - [x] Sign up for Cala's free tier; read its API docs; store the key in `.env`
-- [ ] `clients/cala.py`: typed client (auth header, timeouts, retries with backoff on 429/5xx, `Retry-After`, pagination, custom exceptions); **write it yourself**
+- [x] `clients/cala.py`: typed client (auth header, timeouts, retries with backoff on 429/5xx, `Retry-After`, pagination, custom exceptions); **write it yourself**
 - [ ] `clients/edgar.py`: company lookup (ticker → CIK), filings list, filing document fetch; required User-Agent; client-side rate limiting; local response cache for development
-- [ ] Unit tests with respx: success, pagination, 429 then success, 500 exhausting retries, timeout, malformed JSON
+- [ ] Unit tests with `MockTransport`: success, pagination, 429 then success, 500 exhausting retries, timeout, malformed JSON
 - [ ] `webhooks/`: inbound endpoint verifying an HMAC signature; outbound dispatcher with signing and retries
 - [ ] n8n in Docker Compose; a flow that receives "new 10-K filed for a watchlist company" and posts to Slack
 - [ ] A scheduled check (simple background task) that detects new filings for watchlist companies and fires the outbound webhook
-- [ ] ADR-0003: client design (sync vs async, retry policy)
+- [x] ADR-0003: client design (sync vs async, retry policy)
 
 **Done when:** a forced 429 is retried and logged instead of crashing, and an n8n flow receives a "new 10-K" event and posts it to Slack.
 
 **Explain it in 2 minutes:** which errors you retry and which you don't, and why; how you'd debug a customer's failing integration (logs, request IDs, reproducing with a mock); webhook security.
 
-**Docs if stuck:** [HTTPX](https://www.python-httpx.org/) · [Tenacity](https://tenacity.readthedocs.io/) · [RESPX](https://lundberg.github.io/respx/) · [Pydantic](https://docs.pydantic.dev/) · [SEC EDGAR APIs](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) · Cala API docs (from cala.ai) · [n8n](https://docs.n8n.io/) · [Slack incoming webhooks](https://api.slack.com/messaging/webhooks)
+**Docs if stuck:** [HTTPX2](https://github.com/pydantic/httpx2) · [Tenacity](https://tenacity.readthedocs.io/) · [Mock transports](https://www.python-httpx.org/advanced/transports/#mock-transports) · [Pydantic](https://docs.pydantic.dev/) · [SEC EDGAR APIs](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) · Cala API docs (from cala.ai) · [n8n](https://docs.n8n.io/) · [Slack incoming webhooks](https://api.slack.com/messaging/webhooks)
 
 ---
 
