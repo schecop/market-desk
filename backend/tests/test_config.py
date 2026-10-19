@@ -25,3 +25,16 @@ def test_get_settings_is_cached(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings_call3.database_url == "fake_url"
 
     get_settings.cache_clear()
+
+
+def test_empty_cala_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CALA_API_KEY", "")
+    settings = Settings()
+    assert settings.cala_api_key is None
+
+
+def test_fake_cala_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CALA_API_KEY", "sk-test-123")
+    settings = Settings()
+    assert "sk-test-123" not in repr(settings)
+    assert "sk-test-123" not in str(settings)

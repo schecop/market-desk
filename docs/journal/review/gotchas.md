@@ -30,3 +30,13 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [I said the badge would show any branch's latest run without `?branch=main`](../sprint-0/10-readme.md#gotchas) · *10. README*
 - [Cleaning up the fresh clone removed `market-desk-api:latest`, the image the real repo uses](../sprint-0/10-readme.md#gotchas) · *10. README*
 - [`make help | head -3` ends with `make: *** [Makefile:14: help] Error 3328`](../sprint-0/10-readme.md#gotchas) · *10. README*
+
+## Sprint 1 — Integrations layer
+- [The key loaded but had length 0](../sprint-1/01-cala-signup.md#gotchas) · *1. Cala sign-up and API key*
+- [Two error shapes in one API](../sprint-1/01-cala-signup.md#gotchas) · *1. Cala sign-up and API key*
+- [The `transport` parameter was accepted but never used](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
+- [Tests changed to match the code instead of the requirement](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
+- [My own skeleton test contradicted the rule](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
+- [`staticmethod` used with a non-method, and the client lost two methods](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
+- [`object list can't be used in 'await' expression`, deep inside httpx2](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
+- [Only two relationship types worked](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
