@@ -40,3 +40,8 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [`staticmethod` used with a non-method, and the client lost two methods](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
 - [`object list can't be used in 'await' expression`, deep inside httpx2](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
 - [Only two relationship types worked](../sprint-1/02-cala-client.md#gotchas) · *2. Cala client*
+- [`'FieldInfo' object has no attribute 'items'`](../sprint-1/03-edgar-client.md#gotchas) · *3. EDGAR client*
+- [Retrying forever: tenacity's default is `stop_never`](../sprint-1/03-edgar-client.md#gotchas) · *3. EDGAR client*
+- [The cache stored errors](../sprint-1/03-edgar-client.md#gotchas) · *3. EDGAR client*
+- [`UnicodeEncodeError: 'charmap' codec can't encode character '\u2192'`](../sprint-1/03-edgar-client.md#gotchas) · *3. EDGAR client*
+- [I found `edgartools` only after building the client](../sprint-1/03-edgar-client.md#gotchas) · *3. EDGAR client*

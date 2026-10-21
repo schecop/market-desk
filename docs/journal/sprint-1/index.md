@@ -10,6 +10,8 @@ Typed, production-grade clients for the two data sources (Cala and SEC EDGAR), p
 |---|---|---|
 | 1 | Cala sign-up, API docs, key in `.env` | [link](01-cala-signup.md) |
 | 2 | `clients/cala.py`: typed async client | [link](02-cala-client.md) |
+| 3 | `clients/edgar.py`: SEC EDGAR client | [link](03-edgar-client.md) |
+| 4 | Unit tests with `MockTransport` | Done inside tasks 2 and 3 ([Cala](02-cala-client.md#code-map), [EDGAR](03-edgar-client.md#code-map)) |
 
 ## Sprint-level decisions
 | Date | Decision | Why | Alternatives considered | ADR |
@@ -26,5 +28,7 @@ Typed, production-grade clients for the two data sources (Cala and SEC EDGAR), p
 
 ### Language server (LSP)
 The editor doesn't understand code by itself. Highlighting by meaning (function vs class vs variable), autocomplete, hover docs, go-to-definition (`F12` / `Ctrl+click`) and type errors come from a separate process, the *language server*, which the editor talks to through the Language Server Protocol (LSP). For Python that server is Pylance; for TypeScript it's `tsserver`. To resolve `import httpx` the server has to know **which interpreter** you use, because that interpreter's `site-packages` is where the libraries are. If no interpreter is selected, or VS Code can't find the venv (here it's in `backend/.venv`, not at the repo root), imports show as unresolved and autocomplete stops at the standard library. Fix: install the language server and point it at the venv (`python.defaultInterpreterPath`, or "Python: Select Interpreter").
+
+- [ ] **For Sprint 3:** try `edgartools` for *parsing* (10-K sections, XBRL financials) on documents our client already fetched. See [ADR-0004](../../adr/0004-edgar-rate-limit-and-dev-cache.md#consequences).
 
 ## Retrospective (at sprint end)
