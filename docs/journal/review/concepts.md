@@ -89,3 +89,8 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [`Literal` types](../sprint-1/02-cala-client.md#literal-types) · *2. Cala client*
 - [`Field(default_factory=...)`](../sprint-1/02-cala-client.md#fielddefault_factory) · *2. Cala client*
 - [Model order and forward references](../sprint-1/02-cala-client.md#model-order-and-forward-references) · *2. Cala client*
+- [Client-side rate limiting](../sprint-1/03-edgar-client.md#client-side-rate-limiting) · *3. EDGAR client*
+- [Caching as a transport layer](../sprint-1/03-edgar-client.md#caching-as-a-transport-layer) · *3. EDGAR client*
+- [HTTP caching rules vs your own rules](../sprint-1/03-edgar-client.md#http-caching-rules-vs-your-own-rules) · *3. EDGAR client*
+- [Parametrized tests](../sprint-1/03-edgar-client.md#parametrized-tests) · *3. EDGAR client*
+- [`tmp_path`](../sprint-1/03-edgar-client.md#tmp_path) · *3. EDGAR client*

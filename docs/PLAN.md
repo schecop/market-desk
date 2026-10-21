@@ -297,8 +297,8 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 **Tasks:**
 - [x] Sign up for Cala's free tier; read its API docs; store the key in `.env`
 - [x] `clients/cala.py`: typed client (auth header, timeouts, retries with backoff on 429/5xx, `Retry-After`, pagination, custom exceptions); **write it yourself**
-- [ ] `clients/edgar.py`: company lookup (ticker → CIK), filings list, filing document fetch; required User-Agent; client-side rate limiting; local response cache for development
-- [ ] Unit tests with `MockTransport`: success, pagination, 429 then success, 500 exhausting retries, timeout, malformed JSON
+- [x] `clients/edgar.py`: company lookup (ticker → CIK), filings list, filing document fetch; required User-Agent; client-side rate limiting; local response cache for development
+- [x] Unit tests with `MockTransport`: success, pagination, 429 then success, 500 exhausting retries, timeout, malformed JSON
 - [ ] `webhooks/`: inbound endpoint verifying an HMAC signature; outbound dispatcher with signing and retries
 - [ ] n8n in Docker Compose; a flow that receives "new 10-K filed for a watchlist company" and posts to Slack
 - [ ] A scheduled check (simple background task) that detects new filings for watchlist companies and fires the outbound webhook

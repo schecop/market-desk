@@ -18,8 +18,14 @@ class Settings(BaseSettings):
     # SecretStr masks the value in repr/logs; read it with .get_secret_value().
     cala_api_key: SecretStr | None = None
 
-    # mode="before": runs on the raw value, before Pydantic converts it to SecretStr
-    @field_validator("cala_api_key", mode="before")
+    # SEC EDGAR requires a User-Agent with a name and a contact email. Not a secret, but it
+    # identifies you to the SEC, so it lives in .env too. Optional for the same reason as above.
+    edgar_user_agent: str | None = None
+    # Development only: where hishel caches EDGAR responses. None (the default) disables the cache.
+    edgar_cache_dir: str | None = None
+
+    # mode="before": runs on the raw value, before Pydantic converts it to the field's type
+    @field_validator("cala_api_key", "edgar_user_agent", "edgar_cache_dir", mode="before")
     @classmethod
     def empty_string_to_none(cls, v: Any) -> Any:
         # An empty or whitespace-only string means "not configured"
