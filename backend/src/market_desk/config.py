@@ -24,8 +24,21 @@ class Settings(BaseSettings):
     # Development only: where hishel caches EDGAR responses. None (the default) disables the cache.
     edgar_cache_dir: str | None = None
 
+    # Shared secret for signing webhooks, both directions (Standard Webhooks, ADR-0005).
+    # Format: "whsec_" + base64 of 24-64 random bytes. Without it, inbound webhooks are refused.
+    webhook_signing_secret: SecretStr | None = None
+    # Where outbound events go (the n8n webhook node, task 6). Without it, nothing is sent.
+    n8n_webhook_url: str | None = None
+
     # mode="before": runs on the raw value, before Pydantic converts it to the field's type
-    @field_validator("cala_api_key", "edgar_user_agent", "edgar_cache_dir", mode="before")
+    @field_validator(
+        "cala_api_key",
+        "edgar_user_agent",
+        "edgar_cache_dir",
+        "webhook_signing_secret",
+        "n8n_webhook_url",
+        mode="before",
+    )
     @classmethod
     def empty_string_to_none(cls, v: Any) -> Any:
         # An empty or whitespace-only string means "not configured"

@@ -9,8 +9,10 @@ from fastapi import Depends, FastAPI, Response, status
 from sqlalchemy import Engine
 
 from market_desk.db.engine import database_is_reachable, get_engine
+from market_desk.webhooks.inbound import router as webhooks_router
 
 app = FastAPI(title="Market Desk", version="0.1.0")
+app.include_router(webhooks_router)
 
 
 @app.get("/health")

@@ -45,3 +45,7 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [The cache stored errors](../sprint-1/03-edgar-client.md#gotchas) · *3. EDGAR client*
 - [`UnicodeEncodeError: 'charmap' codec can't encode character '\u2192'`](../sprint-1/03-edgar-client.md#gotchas) · *3. EDGAR client*
 - [I found `edgartools` only after building the client](../sprint-1/03-edgar-client.md#gotchas) · *3. EDGAR client*
+- [The library raises `ValueError` for a malformed signature header](../sprint-1/05-webhooks.md#gotchas) · *5. Webhooks*
+- [Every valid event came back 422](../sprint-1/05-webhooks.md#gotchas) · *5. Webhooks*
+- [The dispatcher reported every successful delivery as a failure](../sprint-1/05-webhooks.md#gotchas) · *5. Webhooks*
+- [A hand-computed signature didn't match the library's](../sprint-1/05-webhooks.md#gotchas) · *5. Webhooks*

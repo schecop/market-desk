@@ -94,3 +94,8 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [HTTP caching rules vs your own rules](../sprint-1/03-edgar-client.md#http-caching-rules-vs-your-own-rules) · *3. EDGAR client*
 - [Parametrized tests](../sprint-1/03-edgar-client.md#parametrized-tests) · *3. EDGAR client*
 - [`tmp_path`](../sprint-1/03-edgar-client.md#tmp_path) · *3. EDGAR client*
+- [Webhooks](../sprint-1/05-webhooks.md#webhooks) · *5. Webhooks*
+- [HMAC signatures](../sprint-1/05-webhooks.md#hmac-signatures) · *5. Webhooks*
+- [Timing attacks and `hmac.compare_digest`](../sprint-1/05-webhooks.md#timing-attacks-and-hmaccompare_digest) · *5. Webhooks*
+- [Replay attacks](../sprint-1/05-webhooks.md#replay-attacks) · *5. Webhooks*
+- [Authentication vs authorization (401 vs 403)](../sprint-1/05-webhooks.md#authentication-vs-authorization-401-vs-403) · *5. Webhooks*

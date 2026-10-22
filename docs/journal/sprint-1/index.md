@@ -12,6 +12,7 @@ Typed, production-grade clients for the two data sources (Cala and SEC EDGAR), p
 | 2 | `clients/cala.py`: typed async client | [link](02-cala-client.md) |
 | 3 | `clients/edgar.py`: SEC EDGAR client | [link](03-edgar-client.md) |
 | 4 | Unit tests with `MockTransport` | Done inside tasks 2 and 3 ([Cala](02-cala-client.md#code-map), [EDGAR](03-edgar-client.md#code-map)) |
+| 5 | `webhooks/`: inbound verification, outbound dispatcher | [link](05-webhooks.md) |
 
 ## Sprint-level decisions
 | Date | Decision | Why | Alternatives considered | ADR |
