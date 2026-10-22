@@ -42,6 +42,7 @@ nav:
           - 1. Cala sign-up and API key: journal/sprint-1/01-cala-signup.md
           - 2. Cala client: journal/sprint-1/02-cala-client.md
           - 3. EDGAR client: journal/sprint-1/03-edgar-client.md
+          - 5. Webhooks: journal/sprint-1/05-webhooks.md
       - Review:
           - Concepts: journal/review/concepts.md
           - Gotchas: journal/review/gotchas.md
@@ -52,6 +53,7 @@ nav:
       - ADR-0002 Journal site: adr/0002-journal-site-mkdocs-github-pages.md
       - ADR-0003 HTTP client design: adr/0003-http-client-design.md
       - ADR-0004 EDGAR rate limit and dev cache: adr/0004-edgar-rate-limit-and-dev-cache.md
+      - ADR-0005 Standard Webhooks: adr/0005-webhooks-standard-webhooks.md
   - Plan: PLAN.md
 
 theme:
