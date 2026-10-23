@@ -1,5 +1,9 @@
+import pytest
 from alembic import command
 from alembic.config import Config
+
+# Runs on the test database (conftest.py): downgrade base would wipe dev data
+pytestmark = pytest.mark.usefixtures("migrated_database")
 
 
 def test_alembic_stairway() -> None:

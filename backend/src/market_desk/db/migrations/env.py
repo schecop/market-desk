@@ -9,6 +9,7 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 
 from market_desk.config import get_settings
+from market_desk.db import models  # noqa: F401  (registers every table on Base.metadata)
 from market_desk.db.base import Base
 
 config = context.config
@@ -17,8 +18,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Autogenerate compares the database with this metadata.
-# Model modules must be imported before this line once they exist (Sprint 1+).
+# Autogenerate compares the database with this metadata (filled by importing models above).
 target_metadata = Base.metadata
 
 # Same source of truth as the app: DATABASE_URL env var / .env / default

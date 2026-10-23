@@ -12,6 +12,7 @@ import pytest
 from aiolimiter import AsyncLimiter
 
 from market_desk.clients.edgar import (
+    Company,
     EdgarClient,
     EdgarConfigError,
     EdgarForbiddenError,
@@ -110,6 +111,41 @@ async def test_get_cik_downloads_tickers_once() -> None:
         await client.get_cik("MSFT")
 
     assert len(seen) == 1
+
+
+@pytest.mark.anyio
+async def test_get_company_returns_ticker_cik_and_name() -> None:
+    async with make_client(fixture_transport([])) as client:
+        company = await client.get_company("AAPL")
+
+    assert company == Company(ticker="AAPL", cik=APPLE_CIK, name="Apple Inc.")
+
+
+@pytest.mark.anyio
+async def test_get_company_is_case_insensitive_and_returns_the_secs_spelling() -> None:
+    async with make_client(fixture_transport([])) as client:
+        company = await client.get_company("msft")
+
+    assert company.ticker == "MSFT"  # what the SEC calls it, not what the caller typed
+    assert company.name == "MICROSOFT CORP"
+
+
+@pytest.mark.anyio
+async def test_get_company_unknown_ticker_raises_not_found() -> None:
+    async with make_client(fixture_transport([])) as client:
+        with pytest.raises(EdgarNotFoundError):
+            await client.get_company("NOPE")
+
+
+@pytest.mark.anyio
+async def test_get_company_and_get_cik_share_one_download() -> None:
+    seen: list[httpx2.Request] = []
+
+    async with make_client(fixture_transport(seen)) as client:
+        await client.get_company("AAPL")
+        assert await client.get_cik("MSFT") == 789019
+
+    assert [str(r.url) for r in seen] == [TICKERS_URL]
 
 
 @pytest.mark.anyio

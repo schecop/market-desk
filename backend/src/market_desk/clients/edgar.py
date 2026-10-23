@@ -42,6 +42,12 @@ class Filing(BaseModel):
     primary_document: str
 
 
+class Company(BaseModel):
+    ticker: str
+    cik: int
+    name: str
+
+
 class EdgarError(Exception):
     """Base class: anything that goes wrong talking to EDGAR. Other 4xx raise it directly."""
 
@@ -97,8 +103,7 @@ class EdgarClient:
     ) -> None:
         # ticker → CIK, filled by the first get_cik() call. None means "not downloaded yet".
         # Created here, per instance, so two clients never share it.
-        self._ciks: dict[str, int] | None = None
-
+        self._companies: dict[str, Company] | None = None
         headers = {"User-Agent": user_agent}
         self.client = httpx2.AsyncClient(headers=headers, timeout=timeout, transport=transport)
         self._sleep = sleep
@@ -130,17 +135,28 @@ class EdgarClient:
 
     async def get_cik(self, ticker: str) -> int:
         """The company's CIK for a ticker, case-insensitive. Downloads the SEC's list once."""
-        if self._ciks is None:
+        return (await self.get_company(ticker)).cik
+
+    async def get_company(self, ticker: str) -> Company:
+        """Ticker, CIK and name for a ticker, case-insensitive. Downloads the SEC's list once."""
+        if self._companies is None:
             response = await self._request("GET", TICKERS_URL)
             # The file is keyed by position ("0", "1"...): re-key it by ticker, once
             try:
                 companies = _json(response).values()
-                self._ciks = {c["ticker"].upper(): int(c["cik_str"]) for c in companies}
-            except (AttributeError, KeyError, TypeError, ValueError) as err:
+                self._companies = {
+                    c["ticker"].upper(): Company(
+                        ticker=c["ticker"],
+                        cik=c["cik_str"],
+                        name=c["title"],
+                    )
+                    for c in companies
+                }
+            except (AttributeError, KeyError, TypeError, ValueError, ValidationError) as err:
                 raise EdgarResponseError(f"Unexpected tickers file: {_snippet(response)}") from err
 
         try:
-            return self._ciks[ticker.upper()]
+            return self._companies[ticker.upper()]
         except KeyError:
             raise EdgarNotFoundError(f"Ticker {ticker!r} is not in the SEC's list") from None
 

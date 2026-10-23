@@ -301,7 +301,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [x] Unit tests with `MockTransport`: success, pagination, 429 then success, 500 exhausting retries, timeout, malformed JSON
 - [x] `webhooks/`: inbound endpoint verifying an HMAC signature; outbound dispatcher with signing and retries
 - [x] n8n in Docker Compose; a flow that receives "new 10-K filed for a watchlist company" and posts to Slack
-- [ ] A scheduled check (simple background task) that detects new filings for watchlist companies and fires the outbound webhook
+- [x] A scheduled check (simple background task) that detects new filings for watchlist companies and fires the outbound webhook
 - [x] ADR-0003: client design (sync vs async, retry policy)
 
 **Done when:** a forced 429 is retried and logged instead of crashing, and an n8n flow receives a "new 10-K" event and posts it to Slack.

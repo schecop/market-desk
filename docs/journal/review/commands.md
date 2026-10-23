@@ -79,3 +79,11 @@ docker compose exec n8n n8n list:workflow         # what n8n has
 MSYS_NO_PATHCONV=1 docker compose exec n8n ls /n8n   # Git Bash: stop it rewriting /paths
 cd backend && uv run python -m market_desk.webhooks.send_test   # send a signed sample event
 ```
+
+## Watchlist and filing check (from `backend/`)
+```bash
+uv run python -m market_desk.watchlist add AAPL      # add + baseline (live EDGAR, no cache)
+uv run python -m market_desk.watchlist list
+uv run python -m market_desk.jobs.check_filings      # one check run; prints how many were announced
+docker compose exec -T db psql -U market_desk -d market_desk -c "SELECT accession_number, notified_at FROM seen_filings;"
+```

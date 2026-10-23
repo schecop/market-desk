@@ -103,3 +103,10 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [Docker network names vs `localhost`](../sprint-1/06-n8n-slack.md#docker-network-names-vs-localhost) · *6. n8n and Slack*
 - [n8n test URL vs production URL, and publishing](../sprint-1/06-n8n-slack.md#n8n-test-url-vs-production-url-and-publishing) · *6. n8n and Slack*
 - [Raw body vs parsed body](../sprint-1/06-n8n-slack.md#raw-body-vs-parsed-body) · *6. n8n and Slack*
+- [The outbox pattern](../sprint-1/07-filing-check.md#the-outbox-pattern) · *7. Scheduled filing check*
+- [At-least-once vs at-most-once delivery](../sprint-1/07-filing-check.md#at-least-once-vs-at-most-once-delivery) · *7. Scheduled filing check*
+- [Idempotency keys, from the sender's side](../sprint-1/07-filing-check.md#idempotency-keys-from-the-senders-side) · *7. Scheduled filing check*
+- [Baselining a new watch](../sprint-1/07-filing-check.md#baselining-a-new-watch) · *7. Scheduled filing check*
+- [FastAPI lifespan](../sprint-1/07-filing-check.md#fastapi-lifespan) · *7. Scheduled filing check*
+- [SQLAlchemy sessions: select, add, change, commit](../sprint-1/07-filing-check.md#sqlalchemy-sessions-select-add-change-commit) · *7. Scheduled filing check*
+- [Test isolation with a rolled-back transaction](../sprint-1/07-filing-check.md#test-isolation-with-a-rolled-back-transaction) · *7. Scheduled filing check*

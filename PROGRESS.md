@@ -2,8 +2,8 @@
 
 Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md`](docs/PLAN.md).
 
-**Current sprint:** Sprint 1 — Integrations layer (not started; Sprint 0 done, 10 of 10 tasks)
-**Hours so far:** ~9 / ~90.5
+**Current sprint:** Sprint 2 — Agent core (not started; Sprint 1 done, 8 of 8 tasks)
+**Hours so far:** ~23 / ~90.5
 
 <!-- Template (copy above the latest entry):
 ## YYYY-MM-DD · Sprint N · Xh
@@ -12,6 +12,12 @@ Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md
 - **Next step:** the exact first thing to do next session
 - **Blockers / notes:** ...
 -->
+
+## 2026-10-23 · Sprint 1 · ~14h (sessions 16-23 Oct)
+- **Done:** Sprint 1 finished, PRs #7-#11 plus this one. Cala client (typed, async, error mapping, tenacity retries honouring `Retry-After`; ADR-0003) and EDGAR client (rate limit, dev cache; ADR-0004), tested offline with `MockTransport`. Signed webhooks in and out with Standard Webhooks (ADR-0005). n8n in Docker Compose verifying signatures and posting to Slack, workflows as JSON in the repo. A scheduled check: watchlist and `seen_filings` tables, outbox with at-least-once delivery, baseline on add, lifespan loop; tests on a separate `market_desk_test` database (ADR-0006). Verified live: a "new" Apple 10-K reached Slack, including through an n8n outage. Retrospective written.
+- **Learned:** retries and backoff, which errors to retry; dependency injection for testability; rate limiting and caching; HMAC signatures, replay and timing attacks, 401 vs 403; Docker service names vs `localhost`; the outbox pattern, at-least-once delivery and idempotency keys; SQLAlchemy sessions; test isolation with a rolled-back transaction. Details in `docs/journal/sprint-1/`.
+- **Next step:** Sprint 2, task 1: start with Claude explaining the plan, on a new branch from `main`. First answer the open question on how Cala adds value over EDGAR (Sprint 1 overview).
+- **Blockers / notes:** n8n doesn't deduplicate events yet (a crash between send and commit would post twice). `.env` must use the production URL `/webhook/market-desk`, not `/webhook-test/`. The `api` container's filing check is off unless `FILING_CHECK_INTERVAL_MINUTES > 0`. Working preference from the retro: for a new topic, Claude implements first and Pablo supervises, then Pablo writes the core of the next similar piece.
 
 ## 2026-10-14 · Sprint 0 · ~1.5h (evening session)
 - **Done:** Sprint 0 finished. Task 8: journal site (MkDocs Material on GitHub Pages, one page per task, review pages, strict builds with anchor checks, `docs.yml` deploying with OIDC), live at https://schecop.github.io/market-desk/ (PR #3). Fix: `make help` failed in Git Bash (PR #4). Task 9: ruleset `protect-main` (PR + both CI checks required, pinned to GitHub Actions, no bypass), created in the UI (PR #5). Task 10: README status, badges and a quick start tested on a fresh clone (PR #6). Retrospective written.

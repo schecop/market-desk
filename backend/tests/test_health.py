@@ -7,6 +7,8 @@ from sqlalchemy import create_engine
 from market_desk.api.main import app
 from market_desk.db.engine import get_engine
 
+pytestmark = pytest.mark.usefixtures("migrated_database")  # the test database exists
+
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:

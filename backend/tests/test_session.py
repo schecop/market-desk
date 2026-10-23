@@ -1,6 +1,9 @@
+import pytest
 from sqlalchemy import text
 
 from market_desk.db.session import get_session
+
+pytestmark = pytest.mark.usefixtures("migrated_database")  # the test database exists
 
 
 def test_get_session_yields_a_working_session_and_closes_it() -> None:
