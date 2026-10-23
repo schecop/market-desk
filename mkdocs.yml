@@ -43,6 +43,7 @@ nav:
           - 2. Cala client: journal/sprint-1/02-cala-client.md
           - 3. EDGAR client: journal/sprint-1/03-edgar-client.md
           - 5. Webhooks: journal/sprint-1/05-webhooks.md
+          - 6. n8n and Slack: journal/sprint-1/06-n8n-slack.md
       - Review:
           - Concepts: journal/review/concepts.md
           - Gotchas: journal/review/gotchas.md

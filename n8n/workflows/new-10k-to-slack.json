@@ -1,0 +1,231 @@
+{
+  "id": "marketDesk10kSlk",
+  "name": "Market Desk: new 10-K to Slack",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "market-desk",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "n1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "market-desk"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verify a Standard Webhooks signature (ADR-0005), like verified_event in inbound.py.\n// Output one item: { valid: true, event } or { valid: false, reason }. Never throw: an error\n// here becomes a 500, and our dispatcher would retry a request that can never pass.\nconst crypto = require('crypto');\nconst TOLERANCE_SECONDS = 5 * 60;\n\nconst headers = $input.first().json.headers; // n8n lowercases header names\n// The raw bytes, exactly as signed (Webhook node option \"Raw Body\"); $json.body is re-parsed JSON\nconst body = (await this.helpers.getBinaryDataBuffer(0, 'data')).toString('utf8');\nconst reject = (reason) => [{ json: { valid: false, reason } }];\n\nconst secret = $env.WEBHOOK_SIGNING_SECRET;\nif (!secret) return reject('WEBHOOK_SIGNING_SECRET is not set in n8n');\nconst id = headers['webhook-id'];\nconst timestamp = headers['webhook-timestamp'];\nconst signatures = headers['webhook-signature'];\nif (!id || !timestamp || !signatures) return reject('missing webhook headers');\nconst seconds = Number(timestamp);\nif (!Number.isFinite(seconds) || Math.abs(Date.now() / 1000 - seconds) > TOLERANCE_SECONDS)\n  return reject('timestamp outside tolerance');\nconst key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');\nconst expected = crypto.createHmac('sha256', key).update(`${id}.${timestamp}.${body}`).digest();\nconst valid = signatures.split(' ').some((entry) => {\n  const [version, sig] = entry.split(',');\n  if (version !== 'v1' || !sig) return false;\n  const given = Buffer.from(sig, 'base64');\n  return given.length === expected.length && crypto.timingSafeEqual(given, expected);\n});\nif (!valid) return reject('bad signature');\nreturn [{ json: { valid: true, event: JSON.parse(body) } }];\n"
+      },
+      "id": "n2",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n3",
+      "name": "Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: \"accepted\" }) }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "n4",
+      "name": "Accepted (202)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: $json.reason }) }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "n5",
+      "name": "Unauthorized (401)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        672,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.event.type === 'filing.created' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "n6",
+      "name": "New filing?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: ':page_facing_up: New *' + $json.event.data.form + '* filed by *' + $json.event.data.company + '* (' + $json.event.data.ticker + ') on ' + $json.event.data.filing_date + '\\n<' + $json.event.data.url + '|Open on EDGAR>' }) }}",
+        "options": {}
+      },
+      "id": "n7",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1104,
+        -96
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify signature": {
+      "main": [
+        [
+          {
+            "node": "Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid?": {
+      "main": [
+        [
+          {
+            "node": "Accepted (202)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unauthorized (401)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accepted (202)": {
+      "main": [
+        [
+          {
+            "node": "New filing?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New filing?": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  }
+}

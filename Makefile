@@ -5,7 +5,7 @@
 # below stays plain: no ( ) ; & | < > or quotes, which one of the two shells would misread.
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down dev test lint fmt check docs-serve docs-build
+.PHONY: help install up down dev test lint fmt check docs-serve docs-build n8n-import n8n-export
 
 help:
 	@echo Targets:
@@ -19,6 +19,8 @@ help:
 	@echo   make check      - lint, then tests: what CI checks
 	@echo   make docs-serve - preview the journal site with live reload: http://127.0.0.1:8001/market-desk/
 	@echo   make docs-build - build the site into site/, failing on any warning - used by CI
+	@echo   make n8n-import - load n8n/workflows into n8n, publish it and restart n8n
+	@echo   make n8n-export - save the workflow edited in the n8n UI back to n8n/workflows
 
 install:
 	cd backend && uv sync
@@ -57,3 +59,17 @@ docs-serve:
 # --strict turns warnings (broken links, pages missing from nav) into a failed build
 docs-build:
 	cd backend && uv run --group docs mkdocs build --strict -f ../mkdocs.yml
+
+# n8n workflows live in the repo as JSON (n8n/README.md). The paths sit inside one quoted
+# sh -c string so Git Bash doesn't rewrite /n8n into a Windows path.
+# A published workflow only picks up changes after a restart.
+N8N_WORKFLOW_ID := marketDesk10kSlk
+N8N_WORKFLOW_FILE := /n8n/workflows/new-10k-to-slack.json
+
+n8n-import:
+	docker compose exec n8n sh -c "n8n import:workflow --input=$(N8N_WORKFLOW_FILE) && n8n publish:workflow --id=$(N8N_WORKFLOW_ID)"
+	docker compose restart n8n
+
+n8n-export:
+# The raw export is noisy (timestamps, version ids, owner); clean-export.js keeps the definition.
+	docker compose exec n8n sh -c "n8n export:workflow --id=$(N8N_WORKFLOW_ID) --output=/tmp/export.json && node /n8n/scripts/clean-export.js /tmp/export.json $(N8N_WORKFLOW_FILE)"

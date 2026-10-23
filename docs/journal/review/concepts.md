@@ -99,3 +99,7 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [Timing attacks and `hmac.compare_digest`](../sprint-1/05-webhooks.md#timing-attacks-and-hmaccompare_digest) · *5. Webhooks*
 - [Replay attacks](../sprint-1/05-webhooks.md#replay-attacks) · *5. Webhooks*
 - [Authentication vs authorization (401 vs 403)](../sprint-1/05-webhooks.md#authentication-vs-authorization-401-vs-403) · *5. Webhooks*
+- [Low-code automation as an integration layer](../sprint-1/06-n8n-slack.md#low-code-automation-as-an-integration-layer) · *6. n8n and Slack*
+- [Docker network names vs `localhost`](../sprint-1/06-n8n-slack.md#docker-network-names-vs-localhost) · *6. n8n and Slack*
+- [n8n test URL vs production URL, and publishing](../sprint-1/06-n8n-slack.md#n8n-test-url-vs-production-url-and-publishing) · *6. n8n and Slack*
+- [Raw body vs parsed body](../sprint-1/06-n8n-slack.md#raw-body-vs-parsed-body) · *6. n8n and Slack*
