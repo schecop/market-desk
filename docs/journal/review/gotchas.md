@@ -52,3 +52,7 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [Git Bash rewrote a container path into a Windows path](../sprint-1/06-n8n-slack.md#gotchas) · *6. n8n and Slack*
 - [`import:workflow --activeState=fromJson` refused to activate](../sprint-1/06-n8n-slack.md#gotchas) · *6. n8n and Slack*
 - [Slack step failed with `invalid syntax`, after a 202](../sprint-1/06-n8n-slack.md#gotchas) · *6. n8n and Slack*
+- [`limit=0` returned no filings](../sprint-1/07-filing-check.md#gotchas) · *7. Scheduled filing check*
+- [Ticker and name from two queries could come from different rows](../sprint-1/07-filing-check.md#gotchas) · *7. Scheduled filing check*
+- [A leftover loop variable in a log line](../sprint-1/07-filing-check.md#gotchas) · *7. Scheduled filing check*
+- [Wrong field names in the SEC tickers file](../sprint-1/07-filing-check.md#gotchas) · *7. Scheduled filing check*

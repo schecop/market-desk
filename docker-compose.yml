@@ -39,6 +39,14 @@ services:
     <<: *backend
     ports:
       - "8000:8000"
+    environment:
+      # Replaces the anchor's environment, so DATABASE_URL is repeated here
+      DATABASE_URL: postgresql+psycopg://market_desk:market_desk@db:5432/market_desk
+      # The filing check (task 7). Service names, not localhost: this runs in a container
+      N8N_WEBHOOK_URL: http://n8n:5678/webhook/market-desk
+      WEBHOOK_SIGNING_SECRET: ${WEBHOOK_SIGNING_SECRET:-}
+      EDGAR_USER_AGENT: ${EDGAR_USER_AGENT:-}
+      FILING_CHECK_INTERVAL_MINUTES: ${FILING_CHECK_INTERVAL_MINUTES:-0}
     depends_on:
       db:
         condition: service_healthy

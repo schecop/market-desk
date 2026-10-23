@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Any
 
-from pydantic import SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     webhook_signing_secret: SecretStr | None = None
     # Where outbound events go (the n8n webhook node, task 6). Without it, nothing is sent.
     n8n_webhook_url: str | None = None
+    # How often the API checks EDGAR for new watchlist filings (task 7). 0 = off: the default,
+    # so tests and a plain `make dev` never call EDGAR on their own.
+    filing_check_interval_minutes: float = Field(default=0, ge=0)
 
     # mode="before": runs on the raw value, before Pydantic converts it to the field's type
     @field_validator(
