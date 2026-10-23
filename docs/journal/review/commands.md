@@ -70,3 +70,12 @@ uv run pytest tests/test_cala_retries.py -q            # one file, quiet
 uv run pytest tests/test_cala_errors.py -q -k 422      # only tests whose name matches "422"
 uv run pytest -q 2>&1 | grep -E "^E |FAILED"           # just the assertion lines and failed test names
 ```
+
+## n8n (from the repo root)
+```bash
+make n8n-import                                   # JSON in n8n/workflows -> n8n, publish, restart
+make n8n-export                                   # workflow edited in the UI -> n8n/workflows (cleaned)
+docker compose exec n8n n8n list:workflow         # what n8n has
+MSYS_NO_PATHCONV=1 docker compose exec n8n ls /n8n   # Git Bash: stop it rewriting /paths
+cd backend && uv run python -m market_desk.webhooks.send_test   # send a signed sample event
+```

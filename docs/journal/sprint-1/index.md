@@ -13,6 +13,7 @@ Typed, production-grade clients for the two data sources (Cala and SEC EDGAR), p
 | 3 | `clients/edgar.py`: SEC EDGAR client | [link](03-edgar-client.md) |
 | 4 | Unit tests with `MockTransport` | Done inside tasks 2 and 3 ([Cala](02-cala-client.md#code-map), [EDGAR](03-edgar-client.md#code-map)) |
 | 5 | `webhooks/`: inbound verification, outbound dispatcher | [link](05-webhooks.md) |
+| 6 | n8n in Docker Compose; flow from a "new 10-K" event to Slack | [link](06-n8n-slack.md) |
 
 ## Sprint-level decisions
 | Date | Decision | Why | Alternatives considered | ADR |

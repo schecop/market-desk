@@ -45,5 +45,27 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # Workflow automation (Sprint 1 task 6): receives our signed events and posts to Slack.
+  # UI at http://localhost:5678. Workflows live in the repo and are imported (see n8n/README.md).
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.44.6   # pinned: `latest` moves every week
+    ports:
+      - "5678:5678"
+    environment:
+      GENERIC_TIMEZONE: Europe/Madrid      # for schedule nodes
+      TZ: Europe/Madrid
+      WEBHOOK_URL: http://localhost:5678/  # the base URL the UI shows for webhook nodes
+      N8N_DIAGNOSTICS_ENABLED: "false"     # no telemetry
+      # The signature check is a Code node: it needs Node's crypto module and $env
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      # Only the two secrets n8n needs, read from .env by compose (not the whole file)
+      WEBHOOK_SIGNING_SECRET: ${WEBHOOK_SIGNING_SECRET:-}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+    volumes:
+      - n8n_data:/home/node/.n8n           # n8n's own SQLite DB, credentials and settings
+      - ./n8n:/n8n                         # workflows and scripts: imported from here, exported back
+
 volumes:
   pgdata:
+  n8n_data:
