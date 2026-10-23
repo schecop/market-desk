@@ -87,6 +87,12 @@ Each test's session runs inside an outer transaction that is rolled back at the 
     **Fix:** the real names.
     **Lesson:** check field names against the fixture, not memory; and the `except` that turns a `KeyError` into a clear `EdgarResponseError` did its job.
 
+!!! bug "`migrate` failed after merging: `Can't locate revision '9a35677e1004'`"
+    **Symptom:** `docker compose up -d` the next time: `service "migrate" didn't complete successfully: exit 255`, and the API didn't start.
+    **Cause:** the `market-desk-api` image was 9 days old. Plain `up -d` reuses an existing image, so it had only the first migration, while the dev database had already been upgraded to the new revision. Alembic can't go forward from a revision it doesn't know.
+    **Fix:** `make up` (`docker compose up -d --build`) rebuilds the image with the current code.
+    **Lesson:** an image is a snapshot of the code when it was built; the database moves forward with every migration. After pulling backend changes, rebuild.
+
 ## Check questions
 ??? question "`dispatcher.send(event)` succeeds, then the process crashes before `session.commit()`. What happens next?"
     `notified_at` is still NULL, so the next run sends it again: Slack gets it **twice**. That's acceptable because the alternative, marking before sending, turns a crash into a lost alert. Both deliveries carry the same `msg_<accession>` id, so a receiver that remembers ids can make it "effectively once"; our n8n flow doesn't deduplicate yet. *(I first called the send "idempotent": it isn't; the design is at-least-once, and the stable id is what makes deduplication possible.)*

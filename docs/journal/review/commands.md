@@ -33,6 +33,7 @@ uv run pytest tests/a.py::test_x tests/b.py::test_y  # run in this order: catche
 
 ## Docker Compose (from the repo root)
 ```bash
+docker compose up -d --build                      # after pulling backend changes: rebuild, or migrate fails on new revisions
 docker compose up -d                                 # start the stack
 docker compose up -d --build                         # rebuild the image first
 docker compose ps                                    # status + health
