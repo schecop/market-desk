@@ -48,6 +48,7 @@ nav:
       - Sprint 2 — Agent core:
           - journal/sprint-2/index.md
           - 1. Agent tools: journal/sprint-2/01-agent-tools.md
+          - 2. Clients and conversation tables: journal/sprint-2/02-agent-tables.md
       - Review:
           - Concepts: journal/review/concepts.md
           - Gotchas: journal/review/gotchas.md
@@ -60,6 +61,7 @@ nav:
       - ADR-0004 EDGAR rate limit and dev cache: adr/0004-edgar-rate-limit-and-dev-cache.md
       - ADR-0005 Standard Webhooks: adr/0005-webhooks-standard-webhooks.md
       - ADR-0006 Filing alerts outbox and test database: adr/0006-filing-alerts-outbox-and-test-database.md
+      - ADR-0007 Clients and conversation data model: adr/0007-clients-and-conversation-data-model.md
   - Plan: PLAN.md
 
 theme:

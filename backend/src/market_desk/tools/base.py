@@ -28,6 +28,9 @@ class ToolError(Exception):
 class ToolContext:
     """Everything a tool needs from outside, injected so tests can pass fakes."""
 
+    # Who the agent is working for. It comes from the request (the API key, task 5), never
+    # from the model's arguments, so a model can't read or change another client's data.
+    client_id: int
     session: Session
     cala: CalaClient
     edgar: EdgarClient

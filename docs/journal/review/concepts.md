@@ -120,3 +120,13 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [Exception propagation](../sprint-2/01-agent-tools.md#exception-propagation) · *1. Agent tools*
 - [Translate errors where their meaning is known](../sprint-2/01-agent-tools.md#translate-errors-where-their-meaning-is-known) · *1. Agent tools*
 - [Exception chaining with `from`](../sprint-2/01-agent-tools.md#exception-chaining-with-from) · *1. Agent tools*
+- [Multi-tenancy with a `client_id` column](../sprint-2/02-agent-tables.md#multi-tenancy-with-a-client_id-column) · *2. Clients and conversation tables*
+- [Expand, backfill, contract](../sprint-2/02-agent-tables.md#expand-backfill-contract) · *2. Clients and conversation tables*
+- [Renaming a table in Postgres](../sprint-2/02-agent-tables.md#renaming-a-table-in-postgres) · *2. Clients and conversation tables*
+- [Transactional DDL](../sprint-2/02-agent-tables.md#transactional-ddl) · *2. Clients and conversation tables*
+- [`ON DELETE CASCADE` and `RESTRICT`](../sprint-2/02-agent-tables.md#on-delete-cascade-and-restrict) · *2. Clients and conversation tables*
+- [CHECK constraints](../sprint-2/02-agent-tables.md#check-constraints) · *2. Clients and conversation tables*
+- [JSONB](../sprint-2/02-agent-tables.md#jsonb) · *2. Clients and conversation tables*
+- [UUID vs sequential ids](../sprint-2/02-agent-tables.md#uuid-vs-sequential-ids) · *2. Clients and conversation tables*
+- [Indexes on foreign keys](../sprint-2/02-agent-tables.md#indexes-on-foreign-keys) · *2. Clients and conversation tables*
+- [Type inference in `mapped_column`](../sprint-2/02-agent-tables.md#type-inference-in-mapped_column) · *2. Clients and conversation tables*

@@ -85,6 +85,17 @@ cd backend && uv run python -m market_desk.webhooks.send_test   # send a signed 
 ```bash
 uv run python -m market_desk.watchlist add AAPL      # add + baseline (live EDGAR, no cache)
 uv run python -m market_desk.watchlist list
+uv run python -m market_desk.watchlist --client acme list   # another client (default: default)
 uv run python -m market_desk.jobs.check_filings      # one check run; prints how many were announced
 docker compose exec -T db psql -U market_desk -d market_desk -c "SELECT accession_number, notified_at FROM seen_filings;"
+```
+
+## Migrations against the test database (from `backend/`)
+```bash
+# Point Alembic at market_desk_test instead of the dev DB (its URL with the database swapped)
+URL=$(uv run python -c "from sqlalchemy import make_url;from market_desk.config import Settings;print(make_url(Settings().database_url).set(database='market_desk_test').render_as_string(hide_password=False))")
+DATABASE_URL="$URL" uv run alembic upgrade head
+DATABASE_URL="$URL" uv run alembic check                                   # models == migrations?
+DATABASE_URL="$URL" uv run alembic revision --autogenerate -m "message"    # new migration from the models
+uv run alembic revision -m "message"                                       # empty file, to write by hand
 ```

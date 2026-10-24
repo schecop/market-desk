@@ -15,6 +15,7 @@ from sqlalchemy.engine import URL
 from sqlalchemy.orm import Session
 
 from market_desk.config import Settings
+from market_desk.db.models import Client
 
 TEST_DATABASE = "market_desk_test"
 
@@ -69,3 +70,12 @@ def db_session(migrated_database: None) -> Iterator[Session]:
             yield session
         outer.rollback()
     engine.dispose()
+
+
+@pytest.fixture
+def client_id(db_session: Session) -> int:
+    """A client of its own for the test, so no test depends on the migration's default client."""
+    client = Client(slug="test", name="Test client")
+    db_session.add(client)
+    db_session.commit()
+    return client.id
