@@ -57,3 +57,9 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [A leftover loop variable in a log line](../sprint-1/07-filing-check.md#gotchas) · *7. Scheduled filing check*
 - [Wrong field names in the SEC tickers file](../sprint-1/07-filing-check.md#gotchas) · *7. Scheduled filing check*
 - [`migrate` failed after merging: `Can't locate revision`](../sprint-1/07-filing-check.md#gotchas) · *7. Scheduled filing check*
+
+## Sprint 2 — Agent core
+- [(exercise) `test_adding_twice_is_a_tool_error` went red after adding unknown-ticker handling](../sprint-2/01-agent-tools.md#gotchas) · *1. Agent tools*
+- [(exercise) An unknown-ticker message that could be false](../sprint-2/01-agent-tools.md#gotchas) · *1. Agent tools*
+- [(found, open) A failed add can leave a pending watchlist entry in the session](../sprint-2/01-agent-tools.md#gotchas) · *1. Agent tools*
+- [`ruff format` dedented the example in a docstring](../sprint-2/01-agent-tools.md#gotchas) · *1. Agent tools*

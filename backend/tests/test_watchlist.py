@@ -9,6 +9,7 @@ from market_desk.db.models import SeenFiling
 from market_desk.jobs.filings import check_new_filings
 from market_desk.watchlist import (
     AlreadyWatchedError,
+    UnknownTickerError,
     add_to_watchlist,
     list_watchlist,
     remove_from_watchlist,
@@ -40,6 +41,15 @@ async def test_add_twice_raises(db_session: Session) -> None:
         await add_to_watchlist(db_session, edgar, "AAPL")
         with pytest.raises(AlreadyWatchedError):
             await add_to_watchlist(db_session, edgar, "aapl")
+
+
+@pytest.mark.anyio
+async def test_add_unknown_ticker_raises_and_adds_nothing(db_session: Session) -> None:
+    async with make_edgar() as edgar:
+        with pytest.raises(UnknownTickerError, match="ZZZZ"):
+            await add_to_watchlist(db_session, edgar, "zzzz")
+
+    assert list_watchlist(db_session) == []
 
 
 @pytest.mark.anyio

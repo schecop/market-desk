@@ -110,3 +110,13 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [FastAPI lifespan](../sprint-1/07-filing-check.md#fastapi-lifespan) · *7. Scheduled filing check*
 - [SQLAlchemy sessions: select, add, change, commit](../sprint-1/07-filing-check.md#sqlalchemy-sessions-select-add-change-commit) · *7. Scheduled filing check*
 - [Test isolation with a rolled-back transaction](../sprint-1/07-filing-check.md#test-isolation-with-a-rolled-back-transaction) · *7. Scheduled filing check*
+
+## Sprint 2 — Agent core
+- [Tool definitions are part of the prompt](../sprint-2/01-agent-tools.md#tool-definitions-are-part-of-the-prompt) · *1. Agent tools*
+- [JSON Schema from Pydantic](../sprint-2/01-agent-tools.md#json-schema-from-pydantic) · *1. Agent tools*
+- [The tool registry](../sprint-2/01-agent-tools.md#the-tool-registry) · *1. Agent tools*
+- [Read tools and write tools](../sprint-2/01-agent-tools.md#read-tools-and-write-tools) · *1. Agent tools*
+- [Tool output size is a token cost](../sprint-2/01-agent-tools.md#tool-output-size-is-a-token-cost) · *1. Agent tools*
+- [Exception propagation](../sprint-2/01-agent-tools.md#exception-propagation) · *1. Agent tools*
+- [Translate errors where their meaning is known](../sprint-2/01-agent-tools.md#translate-errors-where-their-meaning-is-known) · *1. Agent tools*
+- [Exception chaining with `from`](../sprint-2/01-agent-tools.md#exception-chaining-with-from) · *1. Agent tools*

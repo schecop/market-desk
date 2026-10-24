@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from market_desk.clients.edgar import EdgarClient
+from market_desk.clients.edgar import EdgarClient, EdgarNotFoundError
 from market_desk.config import get_settings
 from market_desk.db.models import SeenFiling, WatchlistEntry
 from market_desk.db.session import get_sessionmaker
@@ -25,13 +25,22 @@ class AlreadyWatchedError(Exception):
     """The ticker is on the watchlist already."""
 
 
+class UnknownTickerError(Exception):
+    """The SEC has no company with this ticker."""
+
+
 async def add_to_watchlist(session: Session, edgar: EdgarClient, ticker: str) -> WatchlistEntry:
     """Add a company and **baseline** it: its existing filings count as already notified.
 
     Without the baseline, the first check after adding AAPL would alert on every 10-K it ever
     filed. With it, only filings that appear after today trigger an alert.
     """
-    company = await edgar.get_company(ticker)  # EdgarNotFoundError for an unknown ticker
+    # Translated here because only this line means "unknown ticker": a 404 from list_filings
+    # below is also an EdgarNotFoundError, but the ticker exists.
+    try:
+        company = await edgar.get_company(ticker)
+    except EdgarNotFoundError as exc:
+        raise UnknownTickerError(f"The SEC has no company with ticker {ticker.upper()}") from exc
     if session.scalar(select(WatchlistEntry).where(WatchlistEntry.ticker == company.ticker)):
         raise AlreadyWatchedError(f"{company.ticker} is already on the watchlist")
 
