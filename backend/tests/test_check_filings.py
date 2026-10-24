@@ -10,7 +10,7 @@ from fakes import APPLE_CIK, NEWEST, OLDER, FakeN8n, make_edgar
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from market_desk.db.models import SeenFiling, WatchlistEntry
+from market_desk.db.models import Client, SeenFiling, WatchlistEntry
 from market_desk.jobs.filings import check_new_filings
 
 
@@ -24,9 +24,11 @@ async def run_check(session: Session, n8n: FakeN8n) -> int:
         return await check_new_filings(session, edgar, dispatcher)
 
 
-def watch(session: Session, ticker: str, cik: int, name: str, baseline: list[str]) -> None:
+def watch(
+    session: Session, client_id: int, ticker: str, cik: int, name: str, baseline: list[str]
+) -> None:
     """A watchlist row plus already-notified filings, as add_to_watchlist would leave them."""
-    session.add(WatchlistEntry(ticker=ticker, cik=cik, name=name))
+    session.add(WatchlistEntry(client_id=client_id, ticker=ticker, cik=cik, name=name))
     for accession in baseline:
         session.add(
             SeenFiling(
@@ -46,8 +48,10 @@ def seen(session: Session, accession: str) -> SeenFiling:
 
 
 @pytest.mark.anyio
-async def test_new_filing_is_sent_and_marked_notified(db_session: Session, n8n: FakeN8n) -> None:
-    watch(db_session, "AAPL", APPLE_CIK, "Apple Inc.", baseline=OLDER)
+async def test_new_filing_is_sent_and_marked_notified(
+    db_session: Session, client_id: int, n8n: FakeN8n
+) -> None:
+    watch(db_session, client_id, "AAPL", APPLE_CIK, "Apple Inc.", baseline=OLDER)
 
     delivered = await run_check(db_session, n8n)
 
@@ -68,8 +72,8 @@ async def test_new_filing_is_sent_and_marked_notified(db_session: Session, n8n: 
 
 
 @pytest.mark.anyio
-async def test_nothing_new_sends_nothing(db_session: Session, n8n: FakeN8n) -> None:
-    watch(db_session, "AAPL", APPLE_CIK, "Apple Inc.", baseline=[NEWEST, *OLDER])
+async def test_nothing_new_sends_nothing(db_session: Session, client_id: int, n8n: FakeN8n) -> None:
+    watch(db_session, client_id, "AAPL", APPLE_CIK, "Apple Inc.", baseline=[NEWEST, *OLDER])
 
     assert await run_check(db_session, n8n) == 0
     assert n8n.events == []
@@ -77,9 +81,9 @@ async def test_nothing_new_sends_nothing(db_session: Session, n8n: FakeN8n) -> N
 
 @pytest.mark.anyio
 async def test_failed_delivery_is_kept_and_retried_next_run_with_the_same_id(
-    db_session: Session, n8n: FakeN8n
+    db_session: Session, client_id: int, n8n: FakeN8n
 ) -> None:
-    watch(db_session, "AAPL", APPLE_CIK, "Apple Inc.", baseline=OLDER)
+    watch(db_session, client_id, "AAPL", APPLE_CIK, "Apple Inc.", baseline=OLDER)
     n8n.status = 500  # n8n is down for the whole first run
 
     assert await run_check(db_session, n8n) == 0
@@ -94,10 +98,12 @@ async def test_failed_delivery_is_kept_and_retried_next_run_with_the_same_id(
 
 @pytest.mark.anyio
 async def test_an_edgar_error_for_one_company_does_not_stop_the_others(
-    db_session: Session, n8n: FakeN8n
+    db_session: Session, client_id: int, n8n: FakeN8n
 ) -> None:
-    watch(db_session, "MSFT", 789019, "MICROSOFT CORP", baseline=[])  # no fixture: the SEC 404s
-    watch(db_session, "AAPL", APPLE_CIK, "Apple Inc.", baseline=OLDER)
+    watch(
+        db_session, client_id, "MSFT", 789019, "MICROSOFT CORP", baseline=[]
+    )  # no fixture: the SEC 404s
+    watch(db_session, client_id, "AAPL", APPLE_CIK, "Apple Inc.", baseline=OLDER)
 
     assert await run_check(db_session, n8n) == 1
     assert [e["data"]["ticker"] for e in n8n.events] == ["AAPL"]
@@ -105,11 +111,26 @@ async def test_an_edgar_error_for_one_company_does_not_stop_the_others(
 
 @pytest.mark.anyio
 async def test_two_tickers_with_one_cik_send_one_event_per_filing(
-    db_session: Session, n8n: FakeN8n
+    db_session: Session, client_id: int, n8n: FakeN8n
 ) -> None:
     # Like GOOG and GOOGL: two share classes, one company, one set of filings
-    watch(db_session, "AAPL", APPLE_CIK, "Apple Inc.", baseline=OLDER)
-    watch(db_session, "AAPL.B", APPLE_CIK, "Apple Inc.", baseline=[])
+    watch(db_session, client_id, "AAPL", APPLE_CIK, "Apple Inc.", baseline=OLDER)
+    watch(db_session, client_id, "AAPL.B", APPLE_CIK, "Apple Inc.", baseline=[])
+
+    assert await run_check(db_session, n8n) == 1
+    assert [e["id"] for e in n8n.events] == [f"msg_{NEWEST}"]
+
+
+@pytest.mark.anyio
+async def test_two_clients_watching_one_company_send_one_event_per_filing(
+    db_session: Session, client_id: int, n8n: FakeN8n
+) -> None:
+    """Alerts are still global (Sprint 8 adds per-client alerts): one filing, one event."""
+    other = Client(slug="other", name="Other client")
+    db_session.add(other)
+    db_session.commit()
+    watch(db_session, client_id, "AAPL", APPLE_CIK, "Apple Inc.", baseline=OLDER)
+    watch(db_session, other.id, "AAPL", APPLE_CIK, "Apple Inc.", baseline=[])
 
     assert await run_check(db_session, n8n) == 1
     assert [e["id"] for e in n8n.events] == [f"msg_{NEWEST}"]

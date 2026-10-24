@@ -37,13 +37,15 @@ class Removed(BaseModel):
 
 
 async def list_watchlist(ctx: ToolContext, params: NoInput) -> Watchlist:
-    entries = watchlist.list_watchlist(ctx.session)
+    entries = watchlist.list_watchlist(ctx.session, ctx.client_id)
     return Watchlist(companies=[WatchedCompany.from_entry(e) for e in entries])
 
 
 async def add_to_watchlist(ctx: ToolContext, params: TickerInput) -> WatchedCompany:
     try:
-        entry = await watchlist.add_to_watchlist(ctx.session, ctx.edgar, params.ticker)
+        entry = await watchlist.add_to_watchlist(
+            ctx.session, ctx.edgar, ctx.client_id, params.ticker
+        )
     except watchlist.AlreadyWatchedError as exc:
         raise ToolError(str(exc)) from exc
     except watchlist.UnknownTickerError as exc:
@@ -54,7 +56,7 @@ async def add_to_watchlist(ctx: ToolContext, params: TickerInput) -> WatchedComp
 
 
 async def remove_from_watchlist(ctx: ToolContext, params: TickerInput) -> Removed:
-    removed = watchlist.remove_from_watchlist(ctx.session, params.ticker)
+    removed = watchlist.remove_from_watchlist(ctx.session, ctx.client_id, params.ticker)
     # Not an error: "it wasn't there" is a fine answer, and the model can say so
     return Removed(ticker=params.ticker.upper(), removed=removed)
 

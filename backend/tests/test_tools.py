@@ -11,6 +11,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from market_desk.clients.cala import CalaClient
+from market_desk.db.models import Client
 from market_desk.tools import TOOLS, ToolContext, ToolError
 
 APPLE_ID = "e5bb591a-d308-4aa5-9672-96046d366cde"
@@ -46,10 +47,10 @@ def fake_cala(request: httpx2.Request) -> httpx2.Response:
 
 
 @pytest.fixture
-async def ctx(db_session: Session) -> AsyncIterator[ToolContext]:
+async def ctx(db_session: Session, client_id: int) -> AsyncIterator[ToolContext]:
     cala = CalaClient("test-key", 5, transport=httpx2.MockTransport(fake_cala), sleep=no_sleep)
     async with cala, make_edgar() as edgar:
-        yield ToolContext(session=db_session, cala=cala, edgar=edgar)
+        yield ToolContext(client_id=client_id, session=db_session, cala=cala, edgar=edgar)
 
 
 async def run(ctx: ToolContext, name: str, **arguments: Any) -> Any:
@@ -166,3 +167,21 @@ async def test_adding_twice_is_a_tool_error(ctx: ToolContext) -> None:
 async def test_add_to_watchlist_unknown_ticker_raises(ctx: ToolContext) -> None:
     with pytest.raises(ToolError, match="ZZZZ"):
         await run(ctx, "add_to_watchlist", ticker="ZZZZ")
+
+
+@pytest.mark.anyio
+async def test_tools_only_see_the_context_clients_watchlist(ctx: ToolContext) -> None:
+    other = Client(slug="other", name="Other client")
+    ctx.session.add(other)
+    ctx.session.commit()
+    other_ctx = ToolContext(client_id=other.id, session=ctx.session, cala=ctx.cala, edgar=ctx.edgar)
+
+    await run(other_ctx, "add_to_watchlist", ticker="AAPL")
+
+    assert await run(ctx, "list_watchlist") == {"companies": []}
+    assert await run(ctx, "remove_from_watchlist", ticker="AAPL") == {
+        "ticker": "AAPL",
+        "removed": False,
+    }
+    listed = await run(other_ctx, "list_watchlist")
+    assert [c["ticker"] for c in listed["companies"]] == ["AAPL"]
