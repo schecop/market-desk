@@ -45,6 +45,9 @@ nav:
           - 5. Webhooks: journal/sprint-1/05-webhooks.md
           - 6. n8n and Slack: journal/sprint-1/06-n8n-slack.md
           - 7. Scheduled filing check: journal/sprint-1/07-filing-check.md
+      - Sprint 2 — Agent core:
+          - journal/sprint-2/index.md
+          - 1. Agent tools: journal/sprint-2/01-agent-tools.md
       - Review:
           - Concepts: journal/review/concepts.md
           - Gotchas: journal/review/gotchas.md

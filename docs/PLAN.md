@@ -327,7 +327,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 **Tech:** `anthropic` SDK (`claude-sonnet-5-5`), LangGraph, MCP Python SDK, Postgres (watchlist and conversations tables).
 
 **Tasks:**
-- [ ] `tools/`: typed tool functions: `get_company_facts` (Cala), `search_filings` (EDGAR for now; retrieval in S3), `list_watchlist`, `add_to_watchlist`, `remove_from_watchlist`
+- [x] `tools/`: typed tool functions: `get_company_facts` (Cala), `search_filings` (EDGAR for now; retrieval in S3), `list_watchlist`, `add_to_watchlist`, `remove_from_watchlist`
 - [ ] DB tables: clients, watchlists, conversations, messages, tool_calls
 - [ ] `agent/loop.py`: hand-written tool-use loop with step limit, error handling, parallel tool calls, token/cost accounting; **write it yourself**
 - [ ] Human confirmation for write tools (the agent proposes, the API waits for approval)
