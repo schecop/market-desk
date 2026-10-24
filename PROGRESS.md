@@ -2,8 +2,8 @@
 
 Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md`](docs/PLAN.md).
 
-**Current sprint:** Sprint 2 — Agent core (not started; Sprint 1 done, 8 of 8 tasks)
-**Hours so far:** ~23 / ~90.5
+**Current sprint:** Sprint 2 — Agent core (2 of 9 tasks done)
+**Hours so far:** ~27 / ~90.5
 
 <!-- Template (copy above the latest entry):
 ## YYYY-MM-DD · Sprint N · Xh
@@ -12,6 +12,12 @@ Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md
 - **Next step:** the exact first thing to do next session
 - **Blockers / notes:** ...
 -->
+
+## 2026-10-24 · Sprint 2 · ~4h
+- **Done:** tasks 1-2, PRs #14 and #15. `tools/`: five typed tools (Cala facts, EDGAR filings, watchlist list/add/remove), each a definition the model reads (schema from Pydantic) plus a handler, in a `TOOLS` registry; write tools flagged; `ToolError` for messages meant for the model, `UnknownTickerError` translated in `watchlist.py`. Tables: `clients`, watchlist moved under clients and renamed `watchlists` (hand-written expand → backfill → contract migration; dev AAPL row now on the `default` client), `conversations` (UUID), `messages` (JSONB content blocks), `tool_calls` (models written by Pablo); `ToolContext.client_id`; ADR-0007. Open question from Sprint 1 answered: Cala for exact facts and relationships, filings for what a company says.
+- **Learned:** tool definitions as prompt; JSON Schema from Pydantic; read vs write tools; output size as token cost; exception propagation, chaining with `from`, translating errors where their meaning is known; multi-tenancy with `client_id`; expand/backfill/contract; table renames in Postgres; transactional DDL; CASCADE vs RESTRICT; CHECK constraints; JSONB; UUID vs sequential ids; FK indexes; `Mapped[...]` vs `mapped_column(...)`. Details in `docs/journal/sprint-2/`.
+- **Next step:** `make up` (rebuilds and applies the two new migrations) and `make check`. Then Sprint 2 task 3, `agent/loop.py`, written by Pablo: Claude first explains the loop, the `anthropic` dependency and the structure, on a new branch from `main`.
+- **Blockers / notes:** for task 3, decide who rolls back the session when a tool fails (a failed `add_to_watchlist` can leave a pending row; see the Sprint 2 index). Cala's real `sources` shape is still unverified (one live call). The plan's "ADR-0004: loop vs LangGraph" will take the next free number (0008). Alerts stay global until Sprint 8.
 
 ## 2026-10-23 · Sprint 1 · ~14h (sessions 16-23 Oct)
 - **Done:** Sprint 1 finished, PRs #7-#11 plus this one. Cala client (typed, async, error mapping, tenacity retries honouring `Retry-After`; ADR-0003) and EDGAR client (rate limit, dev cache; ADR-0004), tested offline with `MockTransport`. Signed webhooks in and out with Standard Webhooks (ADR-0005). n8n in Docker Compose verifying signatures and posting to Slack, workflows as JSON in the repo. A scheduled check: watchlist and `seen_filings` tables, outbox with at-least-once delivery, baseline on add, lifespan loop; tests on a separate `market_desk_test` database (ADR-0006). Verified live: a "new" Apple 10-K reached Slack, including through an n8n outage. Retrospective written.
