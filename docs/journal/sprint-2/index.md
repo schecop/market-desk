@@ -10,6 +10,7 @@ Build the agent itself: a tool-using loop written by hand on the Claude API, the
 |---|---|---|
 | 1 | `tools/`: typed tool functions (Cala facts, EDGAR filings, watchlist) | [link](01-agent-tools.md) |
 | 2 | DB tables: clients, watchlists, conversations, messages, tool_calls | [link](02-agent-tables.md) |
+| 3 | `agent/loop.py`: hand-written tool-use loop | [link](03-agent-loop.md) |
 
 ## Sprint-level decisions
 | Date | Decision | Why | Alternatives considered | ADR |
@@ -18,7 +19,7 @@ Build the agent itself: a tool-using loop written by hand on the Claude API, the
 | 2026-10-24 | The plan's "ADR-0004: hand-written loop vs LangGraph" takes the next free number when written: 0004 is the EDGAR client | Keep ADR numbers unique and in order | Renumber old ADRs (breaks links) | — |
 
 ## Open questions
-- [ ] When a tool fails, who rolls back the session? `add_to_watchlist` adds the entry before calling `list_filings`; if that call fails, the entry stays pending, and a later commit would save it without its baseline. Decide in task 3 (the loop) — see [task 1, gotchas](01-agent-tools.md#gotchas).
+- [x] When a tool fails, who rolls back the session? `add_to_watchlist` adds the entry before calling `list_filings`; if that call fails, the entry stays pending, and a later commit would save it without its baseline. **Answered in task 3:** a savepoint per tool call in the loop; the caller commits or rolls back the rest — see [task 3, decisions](03-agent-loop.md#decisions).
 - [ ] Alerts are still global: one event per filing whichever clients watch it. Per-client alert channels need a per-client outbox (Sprint 8). See [ADR-0007](../../adr/0007-clients-and-conversation-data-model.md#consequences).
 - [ ] What shape do Cala's property `sources` really have? The fixtures only ever had `[]`; `get_company_facts` reads them tolerantly. One live call settles it.
 

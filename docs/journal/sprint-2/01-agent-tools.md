@@ -70,9 +70,9 @@ Each layer speaks its own language. A client error says what HTTP did (`EdgarNot
     **Fix:** `UnknownTickerError` raised in `watchlist.py` around `get_company` only; the tool catches domain errors; other `EdgarError`s propagate to the loop.
     **Lesson:** an exception's type doesn't tell you which call raised it. Translate where the meaning is still known.
 
-!!! bug "(found, open) A failed add can leave a pending watchlist entry in the session"
+!!! bug "(found, fixed in task 3) A failed add can leave a pending watchlist entry in the session"
     **Cause:** `add_to_watchlist` calls `session.add(entry)` before `list_filings`. If that call raises, the exception escapes before `commit()`, and the entry stays pending in the session.
-    **Fix:** not yet. Whoever owns the session must `rollback()` when a tool fails; decide in task 3.
+    **Fix:** the loop runs each tool inside a savepoint (`session.begin_nested()`), which rolls back a failed tool's writes; see [task 3](03-agent-loop.md#savepoints).
     **Lesson:** an exception that propagates skips the code after it, including the commit, but doesn't undo what was already added to the session.
 
 !!! bug "`ruff format` dedented the example in a docstring"

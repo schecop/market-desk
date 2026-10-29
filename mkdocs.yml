@@ -49,6 +49,7 @@ nav:
           - journal/sprint-2/index.md
           - 1. Agent tools: journal/sprint-2/01-agent-tools.md
           - 2. Clients and conversation tables: journal/sprint-2/02-agent-tables.md
+          - 3. The agent loop: journal/sprint-2/03-agent-loop.md
       - Review:
           - Concepts: journal/review/concepts.md
           - Gotchas: journal/review/gotchas.md

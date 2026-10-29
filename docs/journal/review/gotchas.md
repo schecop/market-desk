@@ -61,8 +61,12 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 ## Sprint 2 — Agent core
 - [(exercise) `test_adding_twice_is_a_tool_error` went red after adding unknown-ticker handling](../sprint-2/01-agent-tools.md#gotchas) · *1. Agent tools*
 - [(exercise) An unknown-ticker message that could be false](../sprint-2/01-agent-tools.md#gotchas) · *1. Agent tools*
-- [(found, open) A failed add can leave a pending watchlist entry in the session](../sprint-2/01-agent-tools.md#gotchas) · *1. Agent tools*
+- [(found, fixed in task 3) A failed add can leave a pending watchlist entry in the session](../sprint-2/01-agent-tools.md#gotchas) · *1. Agent tools*
 - [`ruff format` dedented the example in a docstring](../sprint-2/01-agent-tools.md#gotchas) · *1. Agent tools*
 - [(exercise) The models module couldn't be imported: `role: Mapped[Literal] = [...]`](../sprint-2/02-agent-tables.md#gotchas) · *2. Clients and conversation tables*
 - [(exercise) `Mapped[JSONB]` and `Mapped[int]` with `nullable=True`](../sprint-2/02-agent-tables.md#gotchas) · *2. Clients and conversation tables*
 - [mypy: `Incompatible return value type (got "Select[WatchlistEntry]", expected "Select[tuple[WatchlistEntry]]")`](../sprint-2/02-agent-tables.md#gotchas) · *2. Clients and conversation tables*
+- [(review) `TypeError: Object of type ValidationError is not JSON serializable`](../sprint-2/03-agent-loop.md#gotchas) · *3. The agent loop*
+- [(review) `KeyError: 'get_stock_price'` crashed the loop](../sprint-2/03-agent-loop.md#gotchas) · *3. The agent loop*
+- [(review) `UnboundLocalError` with `max_steps=0`](../sprint-2/03-agent-loop.md#gotchas) · *3. The agent loop*
+- [(review) The cost was `(4000.0, 0, 0)` instead of `0.004`](../sprint-2/03-agent-loop.md#gotchas) · *3. The agent loop*
