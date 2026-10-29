@@ -93,3 +93,22 @@ async def test_each_client_has_its_own_watchlist(db_session: Session, client_id:
     assert remove_from_watchlist(db_session, other.id, "AAPL") is True
     assert [e.ticker for e in list_watchlist(db_session, client_id)] == ["AAPL"]
     assert list_watchlist(db_session, other.id) == []
+
+
+@pytest.mark.anyio
+async def test_add_and_remove_leave_the_commit_to_the_caller(
+    db_session: Session, client_id: int
+) -> None:
+    """The agent runs these inside a bigger unit of work (task 4): a commit here would save
+    every earlier change in the session, and couldn't be undone by the tool's savepoint."""
+    async with make_edgar() as edgar:
+        await add_to_watchlist(db_session, edgar, client_id, "AAPL")
+    db_session.rollback()
+    assert list_watchlist(db_session, client_id) == []
+
+    async with make_edgar() as edgar:
+        await add_to_watchlist(db_session, edgar, client_id, "AAPL")
+    db_session.commit()
+    remove_from_watchlist(db_session, client_id, "AAPL")
+    db_session.rollback()
+    assert [e.ticker for e in list_watchlist(db_session, client_id)] == ["AAPL"]

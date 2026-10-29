@@ -6,6 +6,9 @@
     uv run python -m market_desk.watchlist --client acme list   # default: the default client
 
 Used by this command, the agent's tools and (Sprint 4) the dashboard.
+
+The functions here flush but never commit: whoever opened the session owns the transaction
+and decides (this command commits; the agent's caller commits once per run).
 """
 
 import asyncio
@@ -37,6 +40,7 @@ async def add_to_watchlist(
 
     Without the baseline, the first check after adding AAPL would alert on every 10-K it ever
     filed. With it, only filings that appear after today trigger an alert.
+    The caller commits.
     """
     # Translated here because only this line means "unknown ticker": a 404 from list_filings
     # below is also an EdgarNotFoundError, but the ticker exists.
@@ -73,17 +77,22 @@ async def add_to_watchlist(
                     notified_at=now,  # baseline: seen and "notified", so never alerted
                 )
             )
-    session.commit()
+    # Send the INSERTs now, inside the caller's transaction: a constraint violation fails here,
+    # where a savepoint around this call can still undo it. Nothing is permanent until commit.
+    session.flush()
     return entry
 
 
 def remove_from_watchlist(session: Session, client_id: int, ticker: str) -> bool:
-    """Remove a ticker; True if it was there. Its seen filings stay, so re-adding won't re-alert."""
+    """Remove a ticker; True if it was there. Its seen filings stay, so re-adding won't re-alert.
+
+    The caller commits.
+    """
     entry = session.scalar(_entry(client_id, ticker.upper()))
     if entry is None:
         return False
     session.delete(entry)
-    session.commit()
+    session.flush()
     return True
 
 
@@ -125,9 +134,11 @@ async def _main(args: list[str]) -> None:
                     sys.exit("Set EDGAR_USER_AGENT in .env first")
                 async with EdgarClient(settings.edgar_user_agent, timeout=30) as edgar:
                     entry = await add_to_watchlist(session, edgar, client.id, ticker)
+                session.commit()
                 print(f"Added {entry.ticker} ({entry.name}); its existing filings won't alert")
             case ["remove", ticker]:
                 removed = remove_from_watchlist(session, client.id, ticker)
+                session.commit()
                 print(f"Removed {ticker.upper()}" if removed else f"{ticker.upper()} wasn't there")
             case _:
                 sys.exit(usage)
