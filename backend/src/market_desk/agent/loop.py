@@ -7,7 +7,7 @@ The loop doesn't store anything: it takes the message list, extends it in place 
 Saving the conversation and committing the session are the caller's job (`POST /chat`, task 5).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from anthropic import AsyncAnthropic
@@ -30,8 +30,11 @@ Answer from tool results, not from memory: use get_company_facts for exact facts
 relationships, search_filings for what a company says about itself in its SEC filings.
 Say which tool each fact came from. If the tools can't answer, say so plainly."""
 
-# Why a run ended: Claude's own stop_reason, or our step limit
-Status = Literal["done", "max_tokens", "refusal", "step_limit", "other"]
+# Why a run ended: Claude's own stop_reason, our step limit, or a write tool waiting for a human
+Status = Literal["done", "max_tokens", "refusal", "step_limit", "awaiting_approval", "other"]
+
+# The tool_result a rejected write gets: an error, so the model knows the action didn't happen
+DECLINED = "The user declined this action. Don't retry it unless the user asks again."
 
 
 @dataclass
@@ -41,6 +44,8 @@ class AgentResult:
     steps: int  # model calls made
     input_tokens: int
     output_tokens: int
+    # With status "awaiting_approval": the write calls a human must approve or reject
+    pending: list[ToolUseBlock] = field(default_factory=list)
 
     @property
     def input_tokens_usd(self) -> float:
@@ -88,11 +93,25 @@ async def run_agent(
                 output_tokens=output_tokens,
             )
 
+        pending = []
+        tool_blocks = [block for block in response.content if block.type == "tool_use"]
+        for tool_block in tool_blocks:
+            if _is_write(tool_block):
+                pending.append(tool_block)
+
+        if pending:
+            return AgentResult(
+                status="awaiting_approval",
+                answer=_text(response),
+                steps=steps,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                pending=pending,
+            )
+
         # One assistant turn can ask for several tools. All the results go back in ONE user
         # message: splitting them teaches Claude to stop making parallel calls.
-        results = [
-            await _run_tool(ctx, block) for block in response.content if block.type == "tool_use"
-        ]
+        results = [await _run_tool(ctx, block) for block in tool_blocks]
         messages.append({"role": "user", "content": results})
 
     return AgentResult(
@@ -102,6 +121,67 @@ async def run_agent(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
     )
+
+
+async def resume_agent(
+    client: AsyncAnthropic,
+    ctx: ToolContext,
+    messages: list[MessageParam],
+    decisions: dict[str, bool],
+    max_steps: int = 8,
+) -> AgentResult:
+    """Continue a run that stopped with "awaiting_approval". Extends `messages` in place.
+
+    `messages` must end on the assistant turn that asked for the tools. `decisions` maps each
+    pending write call's tool_use_id to True (approved) or False (rejected). Approved calls
+    run exactly as Claude proposed them: an approver can't change the arguments.
+    """
+    # 1. Take the tool_use blocks from the last message (check it's an assistant turn).
+    last_message = messages[-1]
+    if last_message["role"] != "assistant":
+        raise ValueError("Last message is not from an assistant")
+
+    tool_use_blocks = [
+        block for block in last_message["content"] if isinstance(block, ToolUseBlock)
+    ]
+    if not tool_use_blocks:
+        raise ValueError("No tool_use blocks found")
+    write_ids = {block.id for block in tool_use_blocks if _is_write(block)}
+
+    # 2. Decisions must match this turn's write calls exactly, checked before anything runs.
+    #    Set differences name every offending id at once, not just the first.
+    undecided = write_ids - decisions.keys()
+    if undecided:
+        raise ValueError(f"Every write tool call needs a decision; missing: {sorted(undecided)}")
+    # A decision for an id that isn't a write call here (an older turn, a read tool) would be
+    # ignored, and the reviewer would think they decided something they didn't.
+    unexpected = decisions.keys() - write_ids
+    if unexpected:
+        raise ValueError(f"Decisions for ids that aren't pending writes: {sorted(unexpected)}")
+
+    # 3. Build one tool_result per tool_use block, in order: reads and approved writes run
+    #    through _run_tool; rejected writes get DECLINED with is_error=True.
+    results = []
+    for block in tool_use_blocks:
+        # Reads and unknown tools: _run_tool turns an unknown name into an error result
+        if block.id not in write_ids:
+            results.append(await _run_tool(ctx, block))
+        else:
+            if decisions[block.id]:
+                results.append(await _run_tool(ctx, block))
+            else:
+                results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": DECLINED,
+                        "is_error": True,
+                    }
+                )
+
+    # 4. Append them as ONE user message, then let the normal loop continue (run_agent).
+    messages.append({"role": "user", "content": results})
+    return await run_agent(client, ctx, messages, max_steps)
 
 
 async def _run_tool(ctx: ToolContext, block: ToolUseBlock) -> ToolResultBlockParam:
@@ -134,6 +214,12 @@ async def _run_tool(ctx: ToolContext, block: ToolUseBlock) -> ToolResultBlockPar
         }
 
     return {"type": "tool_result", "tool_use_id": block.id, "content": output}
+
+
+def _is_write(block: ToolUseBlock) -> bool:
+    """A known tool that changes state. A made-up name is not a write: it gets an error result."""
+    tool = TOOLS.get(block.name)
+    return tool is not None and tool.writes
 
 
 def _status(response: Message) -> Status:

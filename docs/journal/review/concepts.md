@@ -139,3 +139,9 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [Savepoints](../sprint-2/03-agent-loop.md#savepoints) · *3. The agent loop*
 - [Fail fast on bad arguments](../sprint-2/03-agent-loop.md#fail-fast-on-bad-arguments) · *3. The agent loop*
 - [Commas make tuples](../sprint-2/03-agent-loop.md#commas-make-tuples) · *3. The agent loop*
+- [Human in the loop: interrupt and resume](../sprint-2/04-write-confirmation.md#human-in-the-loop-interrupt-and-resume) · *4. Human confirmation for write tools*
+- [Enforce in code, not in the prompt](../sprint-2/04-write-confirmation.md#enforce-in-code-not-in-the-prompt) · *4. Human confirmation for write tools*
+- [Unit of work: who commits](../sprint-2/04-write-confirmation.md#unit-of-work-who-commits) · *4. Human confirmation for write tools*
+- [flush vs commit](../sprint-2/04-write-confirmation.md#flush-vs-commit) · *4. Human confirmation for write tools*
+- [Validate approvals both ways](../sprint-2/04-write-confirmation.md#validate-approvals-both-ways) · *4. Human confirmation for write tools*
+- [`dict.get` for a safe lookup](../sprint-2/04-write-confirmation.md#dictget-for-a-safe-lookup) · *4. Human confirmation for write tools*

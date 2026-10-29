@@ -2,8 +2,8 @@
 
 Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md`](docs/PLAN.md).
 
-**Current sprint:** Sprint 2 — Agent core (2 of 9 tasks done)
-**Hours so far:** ~27 / ~90.5
+**Current sprint:** Sprint 2 — Agent core (4 of 9 tasks done)
+**Hours so far:** ~32 / ~90.5
 
 <!-- Template (copy above the latest entry):
 ## YYYY-MM-DD · Sprint N · Xh
@@ -12,6 +12,35 @@ Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md
 - **Next step:** the exact first thing to do next session
 - **Blockers / notes:** ...
 -->
+
+## 2026-10-29 · Sprint 2 · ~5h (sessions 28-29 Oct)
+- **Done:** tasks 3-4, PRs #17, #18 and #19.
+  - **Task 3:** `agent/loop.py`, the hand-written tool-use loop on `anthropic` 2.x (`claude-sonnet-5-5`).
+    - Claude wrote the basic loop. I added the step limit, tool errors as `is_error` results, and token/cost accounting.
+    - A savepoint per tool call, which closes task 1's rollback question.
+  - **Fix (#18):** the watchlist functions committed the session themselves, which escaped the savepoint. They now flush, and the caller commits.
+  - **Task 4:** write tools wait for a human. `run_agent` returns `awaiting_approval` with the pending calls, and `resume_agent` checks decisions keyed by `tool_use_id`, runs the approved calls and declines the rest.
+  - The loop was verified offline with scratch scripts (fake Claude via `MockTransport`, fake EDGAR).
+- **Learned:**
+  - the `stop_reason` state machine
+  - tool errors as data
+  - parallel tool results in one message
+  - step limits and cost per run
+  - savepoints
+  - unit of work, and flush vs commit
+  - interrupt and resume
+  - enforcing in code, not in the prompt
+  - validating approvals in both directions
+  - commas make tuples, and loop variables outlive their loop
+
+  Details in `docs/journal/sprint-2/` (tasks 3-4).
+- **Next step:** merge PR #19, then `make up` and `make check`. Then Sprint 2 task 5, `POST /chat` (streaming), on a new branch from `main`. Start with Claude explaining the plan.
+- **Blockers / notes:** for task 5:
+  - Messages reloaded from JSONB are plain dicts, not SDK objects, so `resume_agent`'s `isinstance(block, ToolUseBlock)` finds nothing. It raises a `ValueError`, so the failure is loud, but it needs handling.
+  - `resume_agent`'s step and token counts restart at zero.
+  - On an unexpected tool exception, add an error `tool_result` before saving the history.
+
+  The loop's real tests are task 6. Cala's `sources` shape is still unverified.
 
 ## 2026-10-24 · Sprint 2 · ~4h
 - **Done:** tasks 1-2, PRs #14 and #15. `tools/`: five typed tools (Cala facts, EDGAR filings, watchlist list/add/remove), each a definition the model reads (schema from Pydantic) plus a handler, in a `TOOLS` registry; write tools flagged; `ToolError` for messages meant for the model, `UnknownTickerError` translated in `watchlist.py`. Tables: `clients`, watchlist moved under clients and renamed `watchlists` (hand-written expand → backfill → contract migration; dev AAPL row now on the `default` client), `conversations` (UUID), `messages` (JSONB content blocks), `tool_calls` (models written by Pablo); `ToolContext.client_id`; ADR-0007. Open question from Sprint 1 answered: Cala for exact facts and relationships, filings for what a company says.
