@@ -11,6 +11,7 @@ Build the agent itself: a tool-using loop written by hand on the Claude API, the
 | 1 | `tools/`: typed tool functions (Cala facts, EDGAR filings, watchlist) | [link](01-agent-tools.md) |
 | 2 | DB tables: clients, watchlists, conversations, messages, tool_calls | [link](02-agent-tables.md) |
 | 3 | `agent/loop.py`: hand-written tool-use loop | [link](03-agent-loop.md) |
+| 4 | Human confirmation for write tools (and the caller-commits fix) | [link](04-write-confirmation.md) |
 
 ## Sprint-level decisions
 | Date | Decision | Why | Alternatives considered | ADR |

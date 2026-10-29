@@ -70,3 +70,8 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [(review) `KeyError: 'get_stock_price'` crashed the loop](../sprint-2/03-agent-loop.md#gotchas) · *3. The agent loop*
 - [(review) `UnboundLocalError` with `max_steps=0`](../sprint-2/03-agent-loop.md#gotchas) · *3. The agent loop*
 - [(review) The cost was `(4000.0, 0, 0)` instead of `0.004`](../sprint-2/03-agent-loop.md#gotchas) · *3. The agent loop*
+- [(found) A test run committed MSFT to the dev database](../sprint-2/04-write-confirmation.md#gotchas) · *4. Human confirmation for write tools*
+- [(review) Decisions looked up by tool name](../sprint-2/04-write-confirmation.md#gotchas) · *4. Human confirmation for write tools*
+- [(review) `KeyError: 'toolu_list'` in a turn with a read and a write](../sprint-2/04-write-confirmation.md#gotchas) · *4. Human confirmation for write tools*
+- [(review) `KeyError: 'get_stock_price'`: a write plus a made-up tool crashed the resume](../sprint-2/04-write-confirmation.md#gotchas) · *4. Human confirmation for write tools*
+- [(found) Two false results from my acceptance script](../sprint-2/04-write-confirmation.md#gotchas) · *4. Human confirmation for write tools*

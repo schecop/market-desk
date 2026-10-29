@@ -330,7 +330,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [x] `tools/`: typed tool functions: `get_company_facts` (Cala), `search_filings` (EDGAR for now; retrieval in S3), `list_watchlist`, `add_to_watchlist`, `remove_from_watchlist`
 - [x] DB tables: clients, watchlists, conversations, messages, tool_calls
 - [x] `agent/loop.py`: hand-written tool-use loop with step limit, error handling, parallel tool calls, token/cost accounting; **write it yourself**
-- [ ] Human confirmation for write tools (the agent proposes, the API waits for approval)
+- [x] Human confirmation for write tools (the agent proposes, the API waits for approval)
 - [ ] `POST /chat` endpoint (streaming response) using the loop
 - [ ] Tests: fake LLM responses to test the loop deterministically (tool call → result → answer; tool error; step limit hit)
 - [ ] `agent/graph.py`: the same flow in LangGraph, including an interrupt for confirmation
