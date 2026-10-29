@@ -130,3 +130,12 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [UUID vs sequential ids](../sprint-2/02-agent-tables.md#uuid-vs-sequential-ids) · *2. Clients and conversation tables*
 - [Indexes on foreign keys](../sprint-2/02-agent-tables.md#indexes-on-foreign-keys) · *2. Clients and conversation tables*
 - [Type inference in `mapped_column`](../sprint-2/02-agent-tables.md#type-inference-in-mapped_column) · *2. Clients and conversation tables*
+- [The agent loop and stop_reason](../sprint-2/03-agent-loop.md#the-agent-loop-and-stop_reason) · *3. The agent loop*
+- [Append the whole assistant turn](../sprint-2/03-agent-loop.md#append-the-whole-assistant-turn) · *3. The agent loop*
+- [Tool errors are data](../sprint-2/03-agent-loop.md#tool-errors-are-data) · *3. The agent loop*
+- [Parallel tool calls](../sprint-2/03-agent-loop.md#parallel-tool-calls) · *3. The agent loop*
+- [Step limits](../sprint-2/03-agent-loop.md#step-limits) · *3. The agent loop*
+- [Token and cost accounting](../sprint-2/03-agent-loop.md#token-and-cost-accounting) · *3. The agent loop*
+- [Savepoints](../sprint-2/03-agent-loop.md#savepoints) · *3. The agent loop*
+- [Fail fast on bad arguments](../sprint-2/03-agent-loop.md#fail-fast-on-bad-arguments) · *3. The agent loop*
+- [Commas make tuples](../sprint-2/03-agent-loop.md#commas-make-tuples) · *3. The agent loop*
