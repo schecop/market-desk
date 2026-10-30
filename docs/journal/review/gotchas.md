@@ -75,3 +75,7 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [(review) `KeyError: 'toolu_list'` in a turn with a read and a write](../sprint-2/04-write-confirmation.md#gotchas) · *4. Human confirmation for write tools*
 - [(review) `KeyError: 'get_stock_price'`: a write plus a made-up tool crashed the resume](../sprint-2/04-write-confirmation.md#gotchas) · *4. Human confirmation for write tools*
 - [(found) Two false results from my acceptance script](../sprint-2/04-write-confirmation.md#gotchas) · *4. Human confirmation for write tools*
+- [(found) `ValueError: No tool_use blocks found` on every approval](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [(found) mypy: `event` has type `ToolResult`, got `AssistantTurn | ToolResult | Done`](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [(found) mypy: `dict()` of `str | Any` in `_to_json`](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [(open) Two approvals at once run the write twice](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*

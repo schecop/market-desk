@@ -51,6 +51,7 @@ nav:
           - 2. Clients and conversation tables: journal/sprint-2/02-agent-tables.md
           - 3. The agent loop: journal/sprint-2/03-agent-loop.md
           - 4. Human confirmation for write tools: journal/sprint-2/04-write-confirmation.md
+          - '5. POST /chat, streamed': journal/sprint-2/05-chat-endpoint.md
       - Review:
           - Concepts: journal/review/concepts.md
           - Gotchas: journal/review/gotchas.md
@@ -64,6 +65,7 @@ nav:
       - ADR-0005 Standard Webhooks: adr/0005-webhooks-standard-webhooks.md
       - ADR-0006 Filing alerts outbox and test database: adr/0006-filing-alerts-outbox-and-test-database.md
       - ADR-0007 Clients and conversation data model: adr/0007-clients-and-conversation-data-model.md
+      - ADR-0008 Chat streaming with SSE: adr/0008-chat-streaming-sse.md
   - Plan: PLAN.md
 
 theme:

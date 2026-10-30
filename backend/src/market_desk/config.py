@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     # so tests and a plain `make dev` never call EDGAR on their own.
     filing_check_interval_minutes: float = Field(default=0, ge=0)
 
+    # The agent's model calls. Optional so the app starts without it; /chat answers 503 then.
+    anthropic_api_key: SecretStr | None = None
+
     # mode="before": runs on the raw value, before Pydantic converts it to the field's type
     @field_validator(
         "cala_api_key",
@@ -40,6 +43,7 @@ class Settings(BaseSettings):
         "edgar_cache_dir",
         "webhook_signing_secret",
         "n8n_webhook_url",
+        "anthropic_api_key",
         mode="before",
     )
     @classmethod
