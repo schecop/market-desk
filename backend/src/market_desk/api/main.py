@@ -11,6 +11,8 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, Response, status
 from sqlalchemy import Engine
 
+from market_desk.agent.services import services_from_settings
+from market_desk.api.chat import router as chat_router
 from market_desk.config import get_settings
 from market_desk.db.engine import database_is_reachable, get_engine
 from market_desk.jobs.check_filings import filing_check_loop
@@ -20,9 +22,14 @@ from market_desk.webhooks.inbound import router as webhooks_router
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Code before `yield` runs at startup, after it at shutdown."""
-    minutes = get_settings().filing_check_interval_minutes
+    settings = get_settings()
+    # The agent's clients live as long as the app: one connection pool each (agent/services.py)
+    app.state.agent = services_from_settings(settings)
+    minutes = settings.filing_check_interval_minutes
     task = asyncio.create_task(filing_check_loop(minutes)) if minutes > 0 else None
     yield
+    if app.state.agent is not None:
+        await app.state.agent.close()
     if task is not None:
         task.cancel()  # stop the timer cleanly instead of killing it mid-request
         with contextlib.suppress(asyncio.CancelledError):
@@ -31,6 +38,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Market Desk", version="0.1.0", lifespan=lifespan)
 app.include_router(webhooks_router)
+app.include_router(chat_router)
 
 
 @app.get("/health")

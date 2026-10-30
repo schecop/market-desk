@@ -145,3 +145,9 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [flush vs commit](../sprint-2/04-write-confirmation.md#flush-vs-commit) · *4. Human confirmation for write tools*
 - [Validate approvals both ways](../sprint-2/04-write-confirmation.md#validate-approvals-both-ways) · *4. Human confirmation for write tools*
 - [`dict.get` for a safe lookup](../sprint-2/04-write-confirmation.md#dictget-for-a-safe-lookup) · *4. Human confirmation for write tools*
+- [Server-Sent Events (SSE)](../sprint-2/05-chat-endpoint.md#server-sent-events-sse) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [The status code goes first](../sprint-2/05-chat-endpoint.md#the-status-code-goes-first) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [Async generators](../sprint-2/05-chat-endpoint.md#async-generators) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [A session that outlives the route](../sprint-2/05-chat-endpoint.md#a-session-that-outlives-the-route) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [One client per app: connection pooling](../sprint-2/05-chat-endpoint.md#one-client-per-app-connection-pooling) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [Convert at the boundary](../sprint-2/05-chat-endpoint.md#convert-at-the-boundary) · *5. `POST /chat`: the agent over HTTP, streamed*

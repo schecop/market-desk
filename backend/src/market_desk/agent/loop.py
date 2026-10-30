@@ -4,16 +4,22 @@ Send the conversation and the tool definitions to Claude. If it answers, stop. I
 tools (`tool_use` blocks), run them, send the results back (`tool_result` blocks) and ask again.
 
 The loop doesn't store anything: it takes the message list, extends it in place and returns.
-Saving the conversation and committing the session are the caller's job (`POST /chat`, task 5).
+Saving the conversation and committing the session are the caller's job (`POST /chat`).
+
+Two ways to call it: `stream_agent` yields an event as each step happens (the API streams them),
+`run_agent` waits and returns only the result. Same loop: `run_agent` just consumes the stream.
 """
 
+import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 from anthropic import AsyncAnthropic
 from anthropic.types import Message, MessageParam, ToolResultBlockParam, ToolUseBlock
 from pydantic import ValidationError
 
+from market_desk.agent.events import AgentEvent, AssistantTurn, Done, ToolResult
 from market_desk.clients.cala import CalaError
 from market_desk.clients.edgar import EdgarError
 from market_desk.tools import TOOLS, ToolContext, ToolError
@@ -60,6 +66,17 @@ async def run_agent(
     client: AsyncAnthropic, ctx: ToolContext, messages: list[MessageParam], max_steps: int = 8
 ) -> AgentResult:
     """Run the conversation in `messages` until Claude answers. Extends `messages` in place."""
+    return await _final(stream_agent(client, ctx, messages, max_steps))
+
+
+async def stream_agent(
+    client: AsyncAnthropic, ctx: ToolContext, messages: list[MessageParam], max_steps: int = 8
+) -> AsyncIterator[AgentEvent]:
+    """Like run_agent, but yields an event as each step happens, and Done(result) last.
+
+    An async generator: nothing runs until the caller iterates it, and each `yield` hands one
+    event over and pauses here until the caller asks for the next one.
+    """
     if max_steps < 1:
         raise ValueError(f"max_steps should be greater than 0, got {max_steps}")
 
@@ -83,15 +100,24 @@ async def run_agent(
         # The whole content goes back unchanged: text, tool_use and thinking blocks. Claude
         # reads its own earlier turns, and thinking blocks are rejected if they're edited.
         messages.append({"role": "assistant", "content": response.content})
+        yield AssistantTurn(
+            content=response.content,
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+        )
 
         if response.stop_reason != "tool_use":
-            return AgentResult(
-                status=_status(response),
-                answer=_text(response),
-                steps=steps,
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
+            # A generator can't `return value`: the result travels in the last event instead
+            yield Done(
+                AgentResult(
+                    status=_status(response),
+                    answer=_text(response),
+                    steps=steps,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                )
             )
+            return
 
         pending = []
         tool_blocks = [block for block in response.content if block.type == "tool_use"]
@@ -100,26 +126,35 @@ async def run_agent(
                 pending.append(tool_block)
 
         if pending:
-            return AgentResult(
-                status="awaiting_approval",
-                answer=_text(response),
-                steps=steps,
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
-                pending=pending,
+            yield Done(
+                AgentResult(
+                    status="awaiting_approval",
+                    answer=_text(response),
+                    steps=steps,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                    pending=pending,
+                )
             )
+            return
 
         # One assistant turn can ask for several tools. All the results go back in ONE user
         # message: splitting them teaches Claude to stop making parallel calls.
-        results = [await _run_tool(ctx, block) for block in tool_blocks]
+        results = []
+        for block in tool_blocks:
+            result, event = await _run_tool_timed(ctx, block)
+            results.append(result)
+            yield event
         messages.append({"role": "user", "content": results})
 
-    return AgentResult(
-        status="step_limit",
-        answer=_text(response),
-        steps=steps,
-        input_tokens=input_tokens,
-        output_tokens=output_tokens,
+    yield Done(
+        AgentResult(
+            status="step_limit",
+            answer=_text(response),
+            steps=steps,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+        )
     )
 
 
@@ -136,14 +171,25 @@ async def resume_agent(
     pending write call's tool_use_id to True (approved) or False (rejected). Approved calls
     run exactly as Claude proposed them: an approver can't change the arguments.
     """
+    return await _final(stream_resume(client, ctx, messages, decisions, max_steps))
+
+
+async def stream_resume(
+    client: AsyncAnthropic,
+    ctx: ToolContext,
+    messages: list[MessageParam],
+    decisions: dict[str, bool],
+    max_steps: int = 8,
+) -> AsyncIterator[AgentEvent]:
+    """Like resume_agent, but yields events (see stream_agent). Checks run before any event."""
     # 1. Take the tool_use blocks from the last message (check it's an assistant turn).
     last_message = messages[-1]
     if last_message["role"] != "assistant":
         raise ValueError("Last message is not from an assistant")
 
-    tool_use_blocks = [
-        block for block in last_message["content"] if isinstance(block, ToolUseBlock)
-    ]
+    candidates = (_as_tool_use(block) for block in last_message["content"])
+    tool_use_blocks = [block for block in candidates if block is not None]
+
     if not tool_use_blocks:
         raise ValueError("No tool_use blocks found")
     write_ids = {block.id for block in tool_use_blocks if _is_write(block)}
@@ -164,24 +210,51 @@ async def resume_agent(
     results = []
     for block in tool_use_blocks:
         # Reads and unknown tools: _run_tool turns an unknown name into an error result
-        if block.id not in write_ids:
-            results.append(await _run_tool(ctx, block))
+        if block.id not in write_ids or decisions[block.id]:
+            result, event = await _run_tool_timed(ctx, block)
         else:
-            if decisions[block.id]:
-                results.append(await _run_tool(ctx, block))
-            else:
-                results.append(
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": DECLINED,
-                        "is_error": True,
-                    }
-                )
+            result = {
+                "type": "tool_result",
+                "tool_use_id": block.id,
+                "content": DECLINED,
+                "is_error": True,
+            }
+            event = ToolResult(
+                block.id, block.name, DECLINED, is_error=True, duration_ms=None, declined=True
+            )
+        results.append(result)
+        yield event
 
-    # 4. Append them as ONE user message, then let the normal loop continue (run_agent).
+    # 4. Append them as ONE user message, then let the normal loop continue (stream_agent).
     messages.append({"role": "user", "content": results})
-    return await run_agent(client, ctx, messages, max_steps)
+    # `async for ... yield` passes every event of the inner generator through, Done included
+    async for next_event in stream_agent(client, ctx, messages, max_steps):
+        yield next_event
+
+
+async def _final(events: AsyncIterator[AgentEvent]) -> AgentResult:
+    """Run a stream to the end and return its result: what the non-streaming callers want."""
+    async for event in events:
+        if isinstance(event, Done):
+            return event.result
+    raise RuntimeError("The agent stream ended without a Done event")
+
+
+async def _run_tool_timed(
+    ctx: ToolContext, block: ToolUseBlock
+) -> tuple[ToolResultBlockParam, ToolResult]:
+    """_run_tool, plus the event that reports it (with how long it took)."""
+    start = time.perf_counter()  # a monotonic clock: unaffected if the system time changes
+    result = await _run_tool(ctx, block)
+    duration_ms = round((time.perf_counter() - start) * 1000)
+    event = ToolResult(
+        tool_use_id=block.id,
+        name=block.name,
+        content=str(result["content"]),
+        is_error=result.get("is_error", False),
+        duration_ms=duration_ms,
+    )
+    return result, event
 
 
 async def _run_tool(ctx: ToolContext, block: ToolUseBlock) -> ToolResultBlockParam:
@@ -214,6 +287,19 @@ async def _run_tool(ctx: ToolContext, block: ToolUseBlock) -> ToolResultBlockPar
         }
 
     return {"type": "tool_result", "tool_use_id": block.id, "content": output}
+
+
+def _as_tool_use(block: Any) -> ToolUseBlock | None:
+    """A tool_use block as an SDK object, whichever shape it arrived in; None for other blocks.
+
+    Fresh from Claude, blocks are SDK objects; reloaded from Postgres, they're plain dicts.
+    """
+    # Any: a block can be an SDK model of several types or a dict, and we check it here anyway
+    if isinstance(block, ToolUseBlock):
+        return block
+    if isinstance(block, dict) and block.get("type") == "tool_use":
+        return ToolUseBlock.model_validate(block)
+    return None
 
 
 def _is_write(block: ToolUseBlock) -> bool:
