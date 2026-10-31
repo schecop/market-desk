@@ -70,6 +70,7 @@ uvx --from actionlint-py actionlint .github/workflows/*.yml     # static check o
 uv run pytest tests/test_cala_retries.py -q            # one file, quiet
 uv run pytest tests/test_cala_errors.py -q -k 422      # only tests whose name matches "422"
 uv run pytest -q 2>&1 | grep -E "^E |FAILED"           # just the assertion lines and failed test names
+uv run mypy                                             # from backend/: whole project with its config (not mypy <file>)
 ```
 
 ## n8n (from the repo root)
