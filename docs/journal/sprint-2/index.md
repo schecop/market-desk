@@ -13,6 +13,7 @@ Build the agent itself: a tool-using loop written by hand on the Claude API, the
 | 3 | `agent/loop.py`: hand-written tool-use loop | [link](03-agent-loop.md) |
 | 4 | Human confirmation for write tools (and the caller-commits fix) | [link](04-write-confirmation.md) |
 | 5 | `POST /chat`: the loop over HTTP, streamed as SSE (5a events; 5b tokens; row lock) | [link](05-chat-endpoint.md) |
+| 6 | Deterministic loop tests with a scripted Claude | [link](06-loop-tests.md) |
 
 ## Sprint-level decisions
 | Date | Decision | Why | Alternatives considered | ADR |

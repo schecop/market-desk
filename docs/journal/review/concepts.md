@@ -156,3 +156,7 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [Row locks: `SELECT ... FOR UPDATE`](../sprint-2/05-chat-endpoint.md#row-locks-select-for-update) · *5. `POST /chat`: the agent over HTTP, streamed*
 - [MVCC: readers don't wait for locks](../sprint-2/05-chat-endpoint.md#mvcc-readers-dont-wait-for-locks) · *5. `POST /chat`: the agent over HTTP, streamed*
 - [A failed statement poisons the transaction](../sprint-2/05-chat-endpoint.md#a-failed-statement-poisons-the-transaction) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [Test the contract, not the internals](../sprint-2/06-loop-tests.md#test-the-contract-not-the-internals) · *6. Testing the loop deterministically*
+- [Fakes vs mocks](../sprint-2/06-loop-tests.md#fakes-vs-mocks) · *6. Testing the loop deterministically*
+- [Arrange / act / assert](../sprint-2/06-loop-tests.md#arrange-act-assert) · *6. Testing the loop deterministically*
+- [Mutation testing](../sprint-2/06-loop-tests.md#mutation-testing) · *6. Testing the loop deterministically*

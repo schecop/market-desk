@@ -83,3 +83,5 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [(found) psql: `null value in column "id"` inserting a conversation by hand](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
 - [(found) psql: `current transaction is aborted, commands ignored until end of transaction block`](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
 - [(found) psql: the second `FOR UPDATE` didn't wait](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [(found) mypy on one file: `missing library stubs or py.typed marker`](../sprint-2/06-loop-tests.md#gotchas) · *6. Testing the loop deterministically*
+- [(found) A copied test kept the worked example's assertions](../sprint-2/06-loop-tests.md#gotchas) · *6. Testing the loop deterministically*

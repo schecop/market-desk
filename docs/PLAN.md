@@ -332,7 +332,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [x] `agent/loop.py`: hand-written tool-use loop with step limit, error handling, parallel tool calls, token/cost accounting; **write it yourself**
 - [x] Human confirmation for write tools (the agent proposes, the API waits for approval)
 - [x] `POST /chat` endpoint (streaming response) using the loop
-- [ ] Tests: fake LLM responses to test the loop deterministically (tool call → result → answer; tool error; step limit hit)
+- [x] Tests: fake LLM responses to test the loop deterministically (tool call → result → answer; tool error; step limit hit)
 - [ ] `agent/graph.py`: the same flow in LangGraph, including an interrupt for confirmation
 - [ ] ADR-0004: hand-written loop vs LangGraph, trade-offs and which one the API uses
 - [ ] `mcp_server/`: expose `tools/` over MCP; connect it in Claude Desktop or Claude Code next to Cala's MCP server
