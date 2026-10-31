@@ -25,18 +25,23 @@ def create_conversation(session: Session, client_id: int, title: str) -> Convers
 
 
 def get_conversation(
-    session: Session, client_id: int, conversation_id: uuid.UUID
+    session: Session, client_id: int, conversation_id: uuid.UUID, *, lock: bool = False
 ) -> Conversation | None:
     """The conversation, only if it belongs to this client.
 
     Another client's id gives None, the same as an id that doesn't exist: the caller answers
     404 for both, so nobody can probe which conversation ids exist.
+
+    With `lock`, the row is locked (SELECT ... FOR UPDATE) until the session commits or rolls
+    back: a second request for the same conversation waits here, then sees what the first one
+    saved. Without it, two approvals could both see the call pending and both run it.
     """
-    return session.scalars(
-        select(Conversation).where(
-            Conversation.id == conversation_id, Conversation.client_id == client_id
-        )
-    ).one_or_none()
+    query = select(Conversation).where(
+        Conversation.id == conversation_id, Conversation.client_id == client_id
+    )
+    if lock:
+        query = query.with_for_update()
+    return session.scalars(query).one_or_none()
 
 
 def load_messages(session: Session, conversation_id: uuid.UUID) -> list[MessageParam]:

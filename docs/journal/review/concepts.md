@@ -151,3 +151,8 @@ Every concept from every task, one line each, linking to where it's explained. U
 - [A session that outlives the route](../sprint-2/05-chat-endpoint.md#a-session-that-outlives-the-route) · *5. `POST /chat`: the agent over HTTP, streamed*
 - [One client per app: connection pooling](../sprint-2/05-chat-endpoint.md#one-client-per-app-connection-pooling) · *5. `POST /chat`: the agent over HTTP, streamed*
 - [Convert at the boundary](../sprint-2/05-chat-endpoint.md#convert-at-the-boundary) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [Streaming from Claude: nested streams](../sprint-2/05-chat-endpoint.md#streaming-from-claude-nested-streams) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [Variance: why `list[Child]` isn't a `list[Parent]`](../sprint-2/05-chat-endpoint.md#variance-why-listchild-isnt-a-listparent) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [Row locks: `SELECT ... FOR UPDATE`](../sprint-2/05-chat-endpoint.md#row-locks-select-for-update) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [MVCC: readers don't wait for locks](../sprint-2/05-chat-endpoint.md#mvcc-readers-dont-wait-for-locks) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [A failed statement poisons the transaction](../sprint-2/05-chat-endpoint.md#a-failed-statement-poisons-the-transaction) · *5. `POST /chat`: the agent over HTTP, streamed*

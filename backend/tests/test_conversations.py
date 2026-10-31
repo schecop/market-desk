@@ -1,10 +1,13 @@
-"""Conversation tables: defaults, the CHECK constraints, and cascading deletes."""
+"""Conversation tables: defaults, the CHECK constraints, cascading deletes, row locks."""
+
+from typing import Any
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import event, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from market_desk.conversations import get_conversation
 from market_desk.db.models import Conversation, Message, ToolCall
 
 TOOL_USE = {"type": "tool_use", "id": "toolu_01", "name": "list_watchlist", "input": {}}
@@ -65,3 +68,26 @@ def test_deleting_a_conversation_deletes_its_messages_and_tool_calls(
     # ON DELETE CASCADE runs in Postgres, not in SQLAlchemy: the rows are gone in the database
     assert count(db_session, Message) == 0
     assert count(db_session, ToolCall) == 0
+
+
+def test_get_conversation_locks_the_row_only_when_asked(
+    db_session: Session, client_id: int
+) -> None:
+    conversation = conversation_with_a_tool_call(db_session, client_id)
+    sent: list[str] = []
+
+    # Record each SQL statement as it's sent to Postgres, on this test's connection only
+    def record(conn: Any, cursor: Any, statement: str, *args: Any) -> None:
+        sent.append(statement)
+
+    connection = db_session.connection()
+    event.listen(connection, "before_cursor_execute", record)
+    try:
+        get_conversation(db_session, client_id, conversation.id)
+        get_conversation(db_session, client_id, conversation.id, lock=True)
+    finally:
+        event.remove(connection, "before_cursor_execute", record)
+
+    plain, locked = sent
+    assert "FOR UPDATE" not in plain
+    assert locked.rstrip().endswith("FOR UPDATE")

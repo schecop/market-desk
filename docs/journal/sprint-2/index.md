@@ -1,6 +1,6 @@
 # Sprint 2 — Agent core
 
-**Dates:** 2026-10-24 → · **Hours:** ~12h so far (estimate ~12h) · **Plan:** [PLAN.md, Sprint 2](../../PLAN.md#8-sprints)
+**Dates:** 2026-10-24 → · **Hours:** ~14h so far (estimate ~12h) · **Plan:** [PLAN.md, Sprint 2](../../PLAN.md#8-sprints)
 
 ## Goal (in my own words)
 Build the agent itself: a tool-using loop written by hand on the Claude API, then the same flow in LangGraph to see what a framework adds and hides, and the same tools exposed over MCP. The loop is where an agent's production concerns live: step limits, tool errors, parallel calls, cost, and asking a human before anything that writes.
@@ -12,7 +12,7 @@ Build the agent itself: a tool-using loop written by hand on the Claude API, the
 | 2 | DB tables: clients, watchlists, conversations, messages, tool_calls | [link](02-agent-tables.md) |
 | 3 | `agent/loop.py`: hand-written tool-use loop | [link](03-agent-loop.md) |
 | 4 | Human confirmation for write tools (and the caller-commits fix) | [link](04-write-confirmation.md) |
-| 5 | `POST /chat`: the loop over HTTP, streamed as SSE (5a events; 5b tokens) | [link](05-chat-endpoint.md) |
+| 5 | `POST /chat`: the loop over HTTP, streamed as SSE (5a events; 5b tokens; row lock) | [link](05-chat-endpoint.md) |
 
 ## Sprint-level decisions
 | Date | Decision | Why | Alternatives considered | ADR |

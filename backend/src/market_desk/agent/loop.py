@@ -19,7 +19,7 @@ from anthropic import AsyncAnthropic
 from anthropic.types import Message, MessageParam, ToolResultBlockParam, ToolUseBlock
 from pydantic import ValidationError
 
-from market_desk.agent.events import AgentEvent, AssistantTurn, Done, ToolResult
+from market_desk.agent.events import AgentEvent, AssistantTurn, Done, TextDelta, ToolResult
 from market_desk.clients.cala import CalaError
 from market_desk.clients.edgar import EdgarError
 from market_desk.tools import TOOLS, ToolContext, ToolError
@@ -86,13 +86,17 @@ async def stream_agent(
     output_tokens = 0
 
     while steps < max_steps:
-        response = await client.messages.create(
+        async with client.messages.stream(
             model=MODEL,
             max_tokens=MAX_TOKENS,
             system=SYSTEM_PROMPT,
             tools=tools,  # type: ignore[arg-type]  # our dicts match ToolParam's shape
             messages=messages,
-        )
+        ) as stream:
+            async for text in stream.text_stream:
+                yield TextDelta(text)
+            response = await stream.get_final_message()
+
         steps += 1
         input_tokens += response.usage.input_tokens
         output_tokens += response.usage.output_tokens

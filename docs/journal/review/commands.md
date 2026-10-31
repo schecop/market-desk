@@ -99,3 +99,15 @@ DATABASE_URL="$URL" uv run alembic check                                   # mod
 DATABASE_URL="$URL" uv run alembic revision --autogenerate -m "message"    # new migration from the models
 uv run alembic revision -m "message"                                       # empty file, to write by hand
 ```
+
+## Postgres transactions and locks (psql)
+```sql
+-- psql prompt: =# no transaction, =*# inside one, =!# inside a failed one (ROLLBACK to leave)
+BEGIN; SELECT id FROM conversations WHERE id = '<id>' FOR UPDATE;   -- lock the row until COMMIT/ROLLBACK
+SELECT id FROM conversations WHERE id = '<id>' FOR UPDATE NOWAIT;   -- fail at once instead of waiting
+-- Who's connected and in what state ("idle in transaction" = a transaction is open, maybe holding locks)
+SELECT pid, state, left(query, 60) AS query FROM pg_stat_activity
+WHERE datname = 'market_desk' AND pid <> pg_backend_pid();
+-- A UUID in SQL (the models' uuid4 default is Python-side)
+INSERT INTO conversations (id, client_id) SELECT gen_random_uuid(), id FROM clients WHERE slug = 'default' RETURNING id;
+```
