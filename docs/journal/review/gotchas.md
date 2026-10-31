@@ -78,4 +78,8 @@ Every bug and surprise, by symptom, linking to the task page with the cause, fix
 - [(found) `ValueError: No tool_use blocks found` on every approval](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
 - [(found) mypy: `event` has type `ToolResult`, got `AssistantTurn | ToolResult | Done`](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
 - [(found) mypy: `dict()` of `str | Any` in `_to_json`](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
-- [(open) Two approvals at once run the write twice](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [(fixed) Two approvals at once run the write twice](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [(found) mypy: `list[ParsedTextBlock | ...]` is not `list[TextBlock | ...]`](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [(found) psql: `null value in column "id"` inserting a conversation by hand](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [(found) psql: `current transaction is aborted, commands ignored until end of transaction block`](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*
+- [(found) psql: the second `FOR UPDATE` didn't wait](../sprint-2/05-chat-endpoint.md#gotchas) · *5. `POST /chat`: the agent over HTTP, streamed*

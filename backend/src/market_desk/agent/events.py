@@ -4,6 +4,7 @@ The loop yields these; the API turns them into Server-Sent Events and saves the 
 They describe the agent, not HTTP: nothing here knows about SSE or the database.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -17,7 +18,8 @@ if TYPE_CHECKING:  # loop.py imports this module, so a runtime import would be c
 class AssistantTurn:
     """Claude answered once: its content blocks (text, tool_use...) and what that call cost."""
 
-    content: list[ContentBlock]
+    # Sequence, not list: read-only, so it also accepts the stream's ParsedTextBlock subclasses
+    content: Sequence[ContentBlock]
     input_tokens: int
     output_tokens: int
 
@@ -35,10 +37,17 @@ class ToolResult:
 
 
 @dataclass(frozen=True)
+class TextDelta:
+    """A piece of a Claude answer, obtained while generating the whole answer."""
+
+    text: str
+
+
+@dataclass(frozen=True)
 class Done:
     """The run ended. Always the last event, exactly once."""
 
     result: "AgentResult"
 
 
-AgentEvent = AssistantTurn | ToolResult | Done
+AgentEvent = AssistantTurn | ToolResult | TextDelta | Done

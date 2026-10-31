@@ -73,6 +73,7 @@ class FakeClaude:
 
     Records every request body in `requests`, so a test can check what the loop sent.
     A reply can also be an int: that HTTP status, with an error body (Claude failing).
+    A request with `"stream": true` (messages.stream()) gets the same reply as SSE events.
     """
 
     def __init__(self, replies: list[dict[str, Any] | int]) -> None:
@@ -80,11 +81,15 @@ class FakeClaude:
         self.requests: list[dict[str, Any]] = []
 
     def handler(self, request: httpx2.Request) -> httpx2.Response:
-        self.requests.append(json.loads(request.content))
+        body = json.loads(request.content)
+        self.requests.append(body)
         reply = self.replies.pop(0)
         if isinstance(reply, int):
             error = {"type": "error", "error": {"type": "api_error", "message": "Fake failure"}}
             return httpx2.Response(reply, json=error)
+        if body.get("stream"):
+            headers = {"content-type": "text/event-stream"}
+            return httpx2.Response(200, content=as_sse(reply), headers=headers)
         return httpx2.Response(200, json=reply)
 
     def client(self) -> AsyncAnthropic:
@@ -118,3 +123,39 @@ def tool_call(name: str, arguments: dict[str, Any], tool_use_id: str = "toolu_1"
 def answer(text: str) -> dict[str, Any]:
     """A reply in which Claude answers and stops."""
     return claude_reply([{"type": "text", "text": text}], "end_turn")
+
+
+def words(text: str) -> list[str]:
+    """Text in word-sized pieces that join back to it, spaces kept: "a b" -> ["a", " b"]."""
+    pieces = text.split(" ")
+    return pieces[:1] + [" " + piece for piece in pieces[1:]]
+
+
+def as_sse(reply: dict[str, Any]) -> bytes:
+    """A reply as the stream of events Claude's API sends for it, in the API's own order.
+
+    message_start (no content yet), then per block: start, deltas (text in words, a tool's
+    input as one piece of JSON), stop; then message_delta (stop_reason, final usage), stop.
+    """
+    usage = reply["usage"]
+    start = {**reply, "content": [], "stop_reason": None, "usage": {**usage, "output_tokens": 1}}
+    events: list[dict[str, Any]] = [{"type": "message_start", "message": start}]
+
+    for index, block in enumerate(reply["content"]):
+        empty: dict[
+            str, Any
+        ]  # the block before its deltas: text or tool_use, so not dict[str, str]
+        if block["type"] == "text":
+            empty = {"type": "text", "text": ""}
+            deltas = [{"type": "text_delta", "text": piece} for piece in words(block["text"])]
+        else:  # tool_use: the arguments arrive as JSON text, assembled by the SDK
+            empty = {**block, "input": {}}
+            deltas = [{"type": "input_json_delta", "partial_json": json.dumps(block["input"])}]
+        events.append({"type": "content_block_start", "index": index, "content_block": empty})
+        events += [{"type": "content_block_delta", "index": index, "delta": d} for d in deltas]
+        events.append({"type": "content_block_stop", "index": index})
+
+    stop = {"stop_reason": reply["stop_reason"], "stop_sequence": None}
+    events.append({"type": "message_delta", "delta": stop, "usage": usage})
+    events.append({"type": "message_stop"})
+    return "".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n" for e in events).encode()

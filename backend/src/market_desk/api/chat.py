@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from market_desk.agent.events import AgentEvent, AssistantTurn, Done, ToolResult
+from market_desk.agent.events import AgentEvent, AssistantTurn, Done, TextDelta, ToolResult
 from market_desk.agent.loop import stream_agent, stream_resume
 from market_desk.agent.services import AgentServices
 from market_desk.conversations import (
@@ -144,7 +144,13 @@ def _client_id(session: Session, slug: str) -> int:
 
 
 def _conversation(session: Session, client_id: int, conversation_id: uuid.UUID) -> Conversation:
-    conversation = get_conversation(session, client_id, conversation_id)
+    """The conversation, locked until the run commits or rolls back (both routes write to it).
+
+    Taken BEFORE the pending-approval check: a second request waits here, so its check sees
+    the first run's outcome instead of racing it. Held through the whole run, Claude's calls
+    included; that only blocks other requests for this same conversation.
+    """
+    conversation = get_conversation(session, client_id, conversation_id, lock=True)
     if conversation is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Conversation not found")
     return conversation
@@ -203,9 +209,7 @@ def _to_sse(event: AgentEvent) -> list[tuple[str, dict[str, Any]]]:
         case AssistantTurn(content=content):
             pairs: list[tuple[str, dict[str, Any]]] = []
             for block in content:
-                if block.type == "text":
-                    pairs.append(("text", {"text": block.text}))
-                elif block.type == "tool_use":
+                if block.type == "tool_use":
                     pairs.append(
                         ("tool_use", {"id": block.id, "name": block.name, "input": block.input})
                     )
@@ -221,6 +225,11 @@ def _to_sse(event: AgentEvent) -> list[tuple[str, dict[str, Any]]]:
                 "duration_ms": event.duration_ms,
             }
             return [("tool_result", data)]
+        case TextDelta():
+            data = {
+                "text": event.text,
+            }
+            return [("text_delta", data)]
         case Done(result=result):
             cost = result.input_tokens_usd + result.output_tokens_usd
             data = {

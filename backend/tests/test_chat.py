@@ -62,7 +62,9 @@ def test_a_run_streams_its_events_and_saves_the_conversation(
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/event-stream")
-    assert names(response.text) == ["conversation", "tool_use", "tool_result", "text", "done"]
+    # The answer arrives in pieces ("Your", " watchlist", " is", " empty."), then done
+    expected = ["conversation", "tool_use", "tool_result"] + ["text_delta"] * 4 + ["done"]
+    assert names(response.text) == expected
     done = events(response.text)[-1][1]
     assert done["status"] == "done"
     assert done["answer"] == "Your watchlist is empty."
@@ -77,6 +79,24 @@ def test_a_run_streams_its_events_and_saves_the_conversation(
     call = db_session.scalars(select(ToolCall)).one()
     assert call.status == "done"
     assert call.duration_ms is not None
+
+
+def test_the_answer_streams_token_by_token_and_joins_up(
+    client: TestClient, db_session: Session, client_id: int
+) -> None:
+    claude = FakeClaude([answer("Apple filed its 10-K on 31 October.")])
+    use(claude)
+
+    response = client.post("/chat", json={"message": "When did Apple file?"}, headers=HEADERS)
+
+    assert claude.requests[0]["stream"] is True  # the loop asked Claude to stream
+    deltas = [data["text"] for name, data in events(response.text) if name == "text_delta"]
+    assert len(deltas) == 7  # one per word: the browser can show them as they come
+    assert "".join(deltas) == "Apple filed its 10-K on 31 October."
+    assert events(response.text)[-1][1]["answer"] == "".join(deltas)
+    # What's saved is the whole message, not the pieces
+    saved = db_session.scalars(select(Message).where(Message.role == "assistant")).one()
+    assert saved.content == [{"type": "text", "text": "Apple filed its 10-K on 31 October."}]
 
 
 def test_a_follow_up_sends_the_saved_history_to_claude(
@@ -132,7 +152,13 @@ def test_an_approval_runs_the_call_and_finishes_the_run(
         headers=HEADERS,
     )
 
-    assert names(response.text) == ["conversation", "tool_result", "text", "done"]
+    assert names(response.text) == [
+        "conversation",
+        "tool_result",
+        "text_delta",
+        "text_delta",
+        "done",
+    ]
     assert events(response.text)[-1][1]["status"] == "done"
     assert db_session.scalars(select(ToolCall.status)).one() == "done"
 
