@@ -5,7 +5,7 @@
 
 **An AI research desk for public companies, over chat and voice.** Ask about any listed company and get answers grounded in verified facts ([Cala](https://www.cala.ai/)'s knowledge graph) and SEC filings, with citations. Built as a multi-client agent platform: a hand-written tool-use agent on the Claude API, hybrid RAG with measured evals, an MCP server, a React + TypeScript dashboard, a voice channel, tracing, and an AWS deployment with Terraform.
 
-> **Status:** Sprint 0 (scaffold) complete; next up, Sprint 1 (integrations). Nine sprints, 0 to 8. Built in public: session log in [`PROGRESS.md`](PROGRESS.md), and what was built, why, and what was learned in the **[learning journal](https://schecop.github.io/market-desk/)**.
+> **Status:** ⏸️ Paused during November 2026 while I run [NNN](https://github.com/schecop), four one-week proofs of concept; resumes in December. Sprints 0-1 complete; Sprint 2 (agent core) mostly done: hand-written tool-use loop, human approval for writes, SSE streaming, deterministic loop tests, and the same agent in LangGraph on a branch. Nine sprints, 0 to 8. Built in public: session log in [`PROGRESS.md`](PROGRESS.md), and what was built, why, and what was learned in the **[learning journal](https://schecop.github.io/market-desk/)**.
 
 ## Quick start
 Needs [Docker](https://docs.docker.com/get-docker/), [uv](https://docs.astral.sh/uv/) and GNU make (on Windows: `winget install ezwinports.make`).
