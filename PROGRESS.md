@@ -13,6 +13,11 @@ Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md
 - **Blockers / notes:** ...
 -->
 
+## 2026-11-09 · Parked until December
+- **Why:** November goes to the NNN challenge (four one-week PoCs); Market Desk stays the capstone that brings them together.
+- **State:** `agent/graph.py` (the same agent in LangGraph, with the approval interrupt) is committed on `feat/langgraph-agent`, not merged yet. Lint, mypy and all 161 tests pass there, every loop test on both implementations.
+- **Resume with:** open the PR for `feat/langgraph-agent` and merge it; ADR-0009 (hand-written loop vs LangGraph: `graph.py` already cites it); the MCP server (task 9); then the Sprint 2 "done when" run live in both implementations. Then Sprint 3, which now starts with the `LLMClient` interface (there's one from the NNN week 1 PoC to compare against).
+
 ## 2026-10-29 · Sprint 2 · ~5h (sessions 28-29 Oct)
 - **Done:** tasks 3-4, PRs #17, #18 and #19.
   - **Task 3:** `agent/loop.py`, the hand-written tool-use loop on `anthropic` 2.x (`claude-sonnet-5-5`).
