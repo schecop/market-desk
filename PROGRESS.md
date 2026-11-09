@@ -2,8 +2,8 @@
 
 Newest entry first. One entry per working session. The plan is in [`docs/PLAN.md`](docs/PLAN.md).
 
-**Current sprint:** Sprint 2 — Agent core (4 of 9 tasks done)
-**Hours so far:** ~32 / ~90.5
+**Current sprint:** Sprint 2 — Agent core (7 of 9 tasks done)
+**Hours so far:** ~32 / ~93.5
 
 <!-- Template (copy above the latest entry):
 ## YYYY-MM-DD · Sprint N · Xh

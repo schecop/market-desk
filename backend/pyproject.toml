@@ -13,6 +13,7 @@ dependencies = [
     "fastapi>=0.143.0",
     "hishel[httpx2]>=1.4.0",
     "httpx2>=2.13.1",
+    "langgraph>=1.2.19",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.15.0",
     "sqlalchemy>=2.1.4",

@@ -1,14 +1,19 @@
-"""The tool-use loop on its own: a scripted Claude, the real tools, the test database.
+"""The agent on its own: a scripted Claude, the real tools, the test database.
+
+Every test runs twice: on the hand-written loop (loop.py) and on the LangGraph version
+(graph.py). Same contract, two implementations.
 
 No HTTP route here (test_chat.py covers that). Each test scripts Claude's replies, runs the
 loop, and checks three things: what the loop returned or yielded, what it sent back to Claude
 (`claude.requests`), and what ended up in the database.
 """
 
+import uuid
 from collections.abc import AsyncIterator
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 import pytest
+from anthropic import AsyncAnthropic
 from anthropic.types import MessageParam
 from fakes import FakeClaude, answer, claude_reply, make_edgar, tool_call
 from pydantic import BaseModel
@@ -16,16 +21,121 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from market_desk.agent.events import AgentEvent, AssistantTurn, Done, TextDelta, ToolResult
+from market_desk.agent.graph import GraphAgent
 from market_desk.agent.loop import (
     DECLINED,
     MODEL,
     SYSTEM_PROMPT,
+    AgentResult,
     resume_agent,
     run_agent,
     stream_agent,
 )
 from market_desk.db.models import WatchlistEntry
 from market_desk.tools import TOOLS, Tool, ToolContext
+
+
+class Agent(Protocol):
+    """What the tests need from an agent. The hand-written loop and the LangGraph version
+    both provide it, so every test runs on both (the `agent` fixture).
+    """
+
+    def stream(
+        self,
+        claude: AsyncAnthropic,
+        ctx: ToolContext,
+        messages: list[MessageParam],
+        max_steps: int = 8,
+    ) -> AsyncIterator[AgentEvent]: ...
+
+    async def run(
+        self,
+        claude: AsyncAnthropic,
+        ctx: ToolContext,
+        messages: list[MessageParam],
+        max_steps: int = 8,
+    ) -> AgentResult: ...
+
+    async def resume(
+        self,
+        claude: AsyncAnthropic,
+        ctx: ToolContext,
+        messages: list[MessageParam],
+        decisions: dict[str, bool],
+    ) -> AgentResult: ...
+
+
+class Loop:
+    """loop.py: a paused run is resumed from its messages."""
+
+    def stream(
+        self,
+        claude: AsyncAnthropic,
+        ctx: ToolContext,
+        messages: list[MessageParam],
+        max_steps: int = 8,
+    ) -> AsyncIterator[AgentEvent]:
+        return stream_agent(claude, ctx, messages, max_steps)
+
+    async def run(
+        self,
+        claude: AsyncAnthropic,
+        ctx: ToolContext,
+        messages: list[MessageParam],
+        max_steps: int = 8,
+    ) -> AgentResult:
+        return await run_agent(claude, ctx, messages, max_steps)
+
+    async def resume(
+        self,
+        claude: AsyncAnthropic,
+        ctx: ToolContext,
+        messages: list[MessageParam],
+        decisions: dict[str, bool],
+    ) -> AgentResult:
+        return await resume_agent(claude, ctx, messages, decisions)
+
+
+class Graph:
+    """graph.py: a paused run is resumed from its checkpoint, so remember the last thread."""
+
+    def __init__(self) -> None:
+        self.agent = GraphAgent()
+        self.thread_id = ""
+
+    def stream(
+        self,
+        claude: AsyncAnthropic,
+        ctx: ToolContext,
+        messages: list[MessageParam],
+        max_steps: int = 8,
+    ) -> AsyncIterator[AgentEvent]:
+        self.thread_id = str(uuid.uuid4())
+        return self.agent.stream(claude, ctx, messages, max_steps, self.thread_id)
+
+    async def run(
+        self,
+        claude: AsyncAnthropic,
+        ctx: ToolContext,
+        messages: list[MessageParam],
+        max_steps: int = 8,
+    ) -> AgentResult:
+        self.thread_id = str(uuid.uuid4())
+        return await self.agent.run(claude, ctx, messages, max_steps, self.thread_id)
+
+    async def resume(
+        self,
+        claude: AsyncAnthropic,
+        ctx: ToolContext,
+        messages: list[MessageParam],
+        decisions: dict[str, bool],
+    ) -> AgentResult:
+        return await self.agent.resume(claude, ctx, messages, decisions, self.thread_id)
+
+
+@pytest.fixture(params=["loop", "graph"])
+def agent(request: pytest.FixtureRequest) -> Agent:
+    return Loop() if request.param == "loop" else Graph()
 
 
 @pytest.fixture
@@ -59,13 +169,13 @@ def watched(db_session: Session, client_id: int) -> list[str]:
 
 
 @pytest.mark.anyio
-async def test_tool_call_then_answer(ctx: ToolContext) -> None:
+async def test_tool_call_then_answer(agent: Agent, ctx: ToolContext) -> None:
     # Arrange: Claude asks for one tool, then answers
     claude = FakeClaude([tool_call("list_watchlist", {}), answer("Your watchlist is empty.")])
     messages = ask("What's on my watchlist?")
 
     # Act
-    events = await collect(stream_agent(claude.client(), ctx, messages))
+    events = await collect(agent.stream(claude.client(), ctx, messages))
 
     # Assert 1: what the loop yielded, in order, and the result in the last event
     assert kinds(events) == ["AssistantTurn", "ToolResult", "AssistantTurn", "Done"]
@@ -101,7 +211,7 @@ async def test_tool_call_then_answer(ctx: ToolContext) -> None:
 
 @pytest.mark.anyio
 async def test_a_tool_error_goes_back_to_claude_and_the_loop_carries_on(
-    ctx: ToolContext,
+    agent: Agent, ctx: ToolContext
 ) -> None:
     """search_filings with a ticker the SEC doesn't know raises ToolError.
 
@@ -118,7 +228,7 @@ async def test_a_tool_error_goes_back_to_claude_and_the_loop_carries_on(
     messages = ask("Search the filings of ZZZZ")
 
     # Act
-    events = await collect(stream_agent(claude.client(), ctx, messages))
+    events = await collect(agent.stream(claude.client(), ctx, messages))
 
     # Assert 1: the failure is an event like any other, flagged as an error
     assert kinds(events) == ["AssistantTurn", "ToolResult", "AssistantTurn", "Done"]
@@ -141,14 +251,16 @@ async def test_a_tool_error_goes_back_to_claude_and_the_loop_carries_on(
 
 
 @pytest.mark.anyio
-async def test_an_unknown_tool_gets_an_error_listing_the_real_ones(ctx: ToolContext) -> None:
+async def test_an_unknown_tool_gets_an_error_listing_the_real_ones(
+    agent: Agent, ctx: ToolContext
+) -> None:
     """Claude asks for a tool that doesn't exist (say "get_stock_price").
 
     Check: the tool_result sent back is an error that names every tool in TOOLS.
     """
     claude = FakeClaude([tool_call("get_stock_price", {"ticker": "AAPL"}), answer("Sorry.")])
 
-    result = await run_agent(claude.client(), ctx, ask("What's Apple's stock price?"))
+    result = await agent.run(claude.client(), ctx, ask("What's Apple's stock price?"))
 
     result_block = claude.requests[1]["messages"][-1]["content"][0]
     assert result_block["is_error"] is True
@@ -159,7 +271,9 @@ async def test_an_unknown_tool_gets_an_error_listing_the_real_ones(ctx: ToolCont
 
 
 @pytest.mark.anyio
-async def test_parallel_calls_get_their_results_in_one_message(ctx: ToolContext) -> None:
+async def test_parallel_calls_get_their_results_in_one_message(
+    agent: Agent, ctx: ToolContext
+) -> None:
     """One reply with TWO tool_use blocks (different ids). tool_call() makes one block only:
     build the reply with claude_reply([...], "tool_use").
 
@@ -175,7 +289,7 @@ async def test_parallel_calls_get_their_results_in_one_message(ctx: ToolContext)
     )
     claude = FakeClaude([both, answer("Done.")])
 
-    events = await collect(stream_agent(claude.client(), ctx, ask("Watchlist and price?")))
+    events = await collect(agent.stream(claude.client(), ctx, ask("Watchlist and price?")))
 
     # Each call is reported on its own...
     assert kinds(events) == ["AssistantTurn", "ToolResult", "ToolResult", "AssistantTurn", "Done"]
@@ -191,7 +305,9 @@ async def test_parallel_calls_get_their_results_in_one_message(ctx: ToolContext)
 
 
 @pytest.mark.anyio
-async def test_the_step_limit_stops_a_model_that_never_answers(ctx: ToolContext) -> None:
+async def test_the_step_limit_stops_a_model_that_never_answers(
+    agent: Agent, ctx: ToolContext
+) -> None:
     """Claude asks for a tool every time. With max_steps=3, the loop gives up.
 
     Check: status "step_limit", steps 3, exactly 3 requests made (script more replies than
@@ -201,7 +317,7 @@ async def test_the_step_limit_stops_a_model_that_never_answers(ctx: ToolContext)
     # request count below would catch it (instead of an IndexError from an empty script)
     claude = FakeClaude([tool_call("list_watchlist", {}, f"toolu_{n}") for n in range(5)])
 
-    result = await run_agent(claude.client(), ctx, ask("Loop forever"), max_steps=3)
+    result = await agent.run(claude.client(), ctx, ask("Loop forever"), max_steps=3)
 
     assert result.status == "step_limit"
     assert result.steps == 3
@@ -210,11 +326,13 @@ async def test_the_step_limit_stops_a_model_that_never_answers(ctx: ToolContext)
 
 
 @pytest.mark.anyio
-async def test_max_steps_below_one_is_rejected_before_any_request(ctx: ToolContext) -> None:
+async def test_max_steps_below_one_is_rejected_before_any_request(
+    agent: Agent, ctx: ToolContext
+) -> None:
     claude = FakeClaude([answer("never reached")])
 
     with pytest.raises(ValueError, match="max_steps"):
-        await run_agent(claude.client(), ctx, ask("Hi"), max_steps=0)
+        await agent.run(claude.client(), ctx, ask("Hi"), max_steps=0)
 
     assert claude.requests == []
 
@@ -224,14 +342,14 @@ async def test_max_steps_below_one_is_rejected_before_any_request(ctx: ToolConte
 
 @pytest.mark.anyio
 async def test_a_rejected_write_is_declined_and_never_runs(
-    ctx: ToolContext, db_session: Session, client_id: int
+    agent: Agent, ctx: ToolContext, db_session: Session, client_id: int
 ) -> None:
     claude = FakeClaude(
         [tool_call("add_to_watchlist", {"ticker": "AAPL"}), answer("OK, I didn't add it.")]
     )
     messages = ask("Add Apple to my watchlist")
 
-    paused = await run_agent(claude.client(), ctx, messages)
+    paused = await agent.run(claude.client(), ctx, messages)
 
     # The loop stops BEFORE running the write and says which call waits
     assert paused.status == "awaiting_approval"
@@ -240,7 +358,7 @@ async def test_a_rejected_write_is_declined_and_never_runs(
     assert watched(db_session, client_id) == []
 
     # A new client, like a new request: resuming needs only the messages, not the old run
-    result = await resume_agent(claude.client(), ctx, messages, {"toolu_1": False})
+    result = await agent.resume(claude.client(), ctx, messages, {"toolu_1": False})
 
     assert result.status == "done"
     assert claude.requests[1]["messages"][-1]["content"] == [
@@ -258,15 +376,20 @@ async def test_a_rejected_write_is_declined_and_never_runs(
     ],
 )
 async def test_decisions_must_match_the_pending_writes(
-    ctx: ToolContext, db_session: Session, client_id: int, decisions: dict[str, bool], error: str
+    agent: Agent,
+    ctx: ToolContext,
+    db_session: Session,
+    client_id: int,
+    decisions: dict[str, bool],
+    error: str,
 ) -> None:
     claude = FakeClaude([tool_call("add_to_watchlist", {"ticker": "AAPL"})])
     messages = ask("Add Apple to my watchlist")
-    await run_agent(claude.client(), ctx, messages)
+    await agent.run(claude.client(), ctx, messages)
     before = list(messages)
 
     with pytest.raises(ValueError, match=error):
-        await resume_agent(claude.client(), ctx, messages, decisions)
+        await agent.resume(claude.client(), ctx, messages, decisions)
 
     # Checked before anything ran: no tool, no request, no message added
     assert watched(db_session, client_id) == []
@@ -283,7 +406,11 @@ class NoInput(BaseModel):
 
 @pytest.mark.anyio
 async def test_a_tool_bug_propagates_and_its_writes_are_undone(
-    ctx: ToolContext, db_session: Session, client_id: int, monkeypatch: pytest.MonkeyPatch
+    agent: Agent,
+    ctx: ToolContext,
+    db_session: Session,
+    client_id: int,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Not a ToolError: a bug. The loop doesn't hide it from the caller (the route rolls back
     and sends an `error` event), but the tool's savepoint has already undone its half-writes.
@@ -302,7 +429,7 @@ async def test_a_tool_bug_propagates_and_its_writes_are_undone(
     claude = FakeClaude([tool_call("buggy", {}), answer("never reached")])
 
     with pytest.raises(RuntimeError, match="a bug in the tool"):
-        await run_agent(claude.client(), ctx, ask("Go"))
+        await agent.run(claude.client(), ctx, ask("Go"))
 
     assert len(claude.requests) == 1  # nothing was sent back after the crash
     assert watched(db_session, client_id) == []  # the savepoint rolled the row back
@@ -322,12 +449,12 @@ async def test_a_tool_bug_propagates_and_its_writes_are_undone(
     ],
 )
 async def test_claudes_stop_reason_becomes_the_status(
-    ctx: ToolContext, stop_reason: str, status: str
+    agent: Agent, ctx: ToolContext, stop_reason: str, status: str
 ) -> None:
     reply = claude_reply([{"type": "text", "text": "Partial answer"}], stop_reason)
     claude = FakeClaude([reply])
 
-    result = await run_agent(claude.client(), ctx, ask("Tell me about Apple"))
+    result = await agent.run(claude.client(), ctx, ask("Tell me about Apple"))
 
     assert result.status == status
     assert result.answer == "Partial answer"  # kept even when the run didn't end cleanly
@@ -335,10 +462,10 @@ async def test_claudes_stop_reason_becomes_the_status(
 
 
 @pytest.mark.anyio
-async def test_text_deltas_join_up_to_the_answer(ctx: ToolContext) -> None:
+async def test_text_deltas_join_up_to_the_answer(agent: Agent, ctx: ToolContext) -> None:
     claude = FakeClaude([answer("Apple was founded in 1976.")])
 
-    events = await collect(stream_agent(claude.client(), ctx, ask("When was Apple founded?")))
+    events = await collect(agent.stream(claude.client(), ctx, ask("When was Apple founded?")))
 
     deltas = [event.text for event in events if isinstance(event, TextDelta)]
     assert len(deltas) > 1  # really streamed, in pieces
@@ -346,3 +473,25 @@ async def test_text_deltas_join_up_to_the_answer(ctx: ToolContext) -> None:
     turn = events[-2]
     assert isinstance(turn, AssistantTurn) and isinstance(events[-1], Done)
     assert all(not isinstance(event, ToolResult) for event in events)
+
+
+# --- LangGraph only: what the checkpointer adds ---
+
+
+@pytest.mark.anyio
+async def test_graph_a_rejected_resume_leaves_the_run_resumable(ctx: ToolContext) -> None:
+    """A bad resume must fail BEFORE it reaches the checkpoint. Checked inside the node, the
+    bad value was saved as the interrupt's answer and replayed by every later resume.
+    """
+    graph = Graph()
+    claude = FakeClaude(
+        [tool_call("add_to_watchlist", {"ticker": "AAPL"}), answer("OK, I didn't add it.")]
+    )
+    messages = ask("Add Apple to my watchlist")
+    await graph.run(claude.client(), ctx, messages)
+
+    with pytest.raises(ValueError, match="missing"):
+        await graph.resume(claude.client(), ctx, messages, {})
+
+    result = await graph.resume(claude.client(), ctx, messages, {"toolu_1": False})
+    assert result.status == "done"

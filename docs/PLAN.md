@@ -155,10 +155,10 @@ One product touches all of this in a realistic way: an agent that real users tal
 | Quality | pytest, ruff, mypy, pre-commit | Tests, lint/format, types, enforced before commit |
 | CI/CD | GitHub Actions | Free for public repos; OIDC to AWS in Sprint 7 |
 | Journal site | MkDocs Material on GitHub Pages | Searchable learning journal built from the Markdown in `docs/journal/`; free hosting, deployed by GitHub Actions ([ADR-0002](adr/0002-journal-site-mkdocs-github-pages.md)) |
-| LLM | Claude API (`anthropic` SDK): `claude-sonnet-5-5` for the agent, `claude-haiku-5-5` for cheap steps and evals | Strong tool use; Haiku and prompt caching keep cost down |
+| LLM | Model-agnostic `LLMClient` interface with one adapter per provider; the model for each role (agent, cheap steps, judge) lives in config. Sprints 0-2 used the Claude API (`anthropic` SDK) directly; the per-role choice is made in Sprint 3 from evals | Latency and cost matter as much as quality, and the best model per role changes over time; no default model (ADR from Sprint 3) |
 | Agent framework | LangGraph (comparison only) | Widely used agent framework; contrast with the hand-written loop |
 | MCP | Official MCP Python SDK | Same tools exposed as an MCP server, like Cala's own |
-| Embeddings / rerank | Local sentence-transformers model + local cross-encoder | Zero cost, offline, good enough for 10-20 companies |
+| Embeddings / rerank | Chosen in Sprint 3 from a comparison on the retrieval eval set; local sentence-transformers models are the zero-cost baseline | Zero cost and offline is the bar a paid model has to beat with numbers |
 | Data | Cala API (free Starter tier); SEC EDGAR APIs (free) | Verified facts + unstructured filings. EDGAR requires a User-Agent with contact email and has rate limits |
 | Automation | n8n (self-hosted in Docker), Slack incoming webhook | A common way to wire agents into business workflows; Cala integrates with n8n |
 | Frontend | Vite + React + TypeScript, TanStack Query, Tailwind, Vitest | Mainstream frontend stack: fast dev server, typed components, cached data fetching |
@@ -239,14 +239,14 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 | 0 | Scaffold | ~6.5h | SWE practices, containers, docs site |
 | 1 | Integrations layer | ~10h | Backend & integrations, n8n |
 | 2 | Agent core | ~12h | Agents outside Claude Code |
-| 3 | RAG with evaluation | ~12h | RAG, financial data |
-| — | **Checkpoint: first usable version** | ~40.5h total | |
+| 3 | RAG with evaluation | ~15h | RAG, financial data, model choice by evals |
+| — | **Checkpoint: first usable version** | ~43.5h total | |
 | 4 | React + TypeScript dashboard | ~12h | Full-stack web |
 | 5 | Voice channel | ~12h | Voice agents |
 | 6 | Observability and evals in CI | ~10h | Observability, debugging live agents |
 | 7 | Ship to AWS | ~10h | Containers, deployment, IaC |
 | 8 | Second client, docs and demo | ~6h | Multi-client, docs, communication |
-| | **Total** | **~90.5h** | |
+| | **Total** | **~93.5h** | |
 
 ---
 
@@ -333,7 +333,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [x] Human confirmation for write tools (the agent proposes, the API waits for approval)
 - [x] `POST /chat` endpoint (streaming response) using the loop
 - [x] Tests: fake LLM responses to test the loop deterministically (tool call → result → answer; tool error; step limit hit)
-- [ ] `agent/graph.py`: the same flow in LangGraph, including an interrupt for confirmation
+- [x] `agent/graph.py`: the same flow in LangGraph, including an interrupt for confirmation
 - [ ] ADR-0004: hand-written loop vs LangGraph, trade-offs and which one the API uses
 - [ ] `mcp_server/`: expose `tools/` over MCP; connect it in Claude Desktop or Claude Code next to Cala's MCP server
 
@@ -345,7 +345,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 
 ---
 
-### Sprint 3 — RAG with evaluation (~12h)
+### Sprint 3 — RAG with evaluation (~15h)
 
 **Objective:** retrieval over SEC filings that measurably improves through three versions, combined with Cala facts in cited answers.
 
@@ -357,10 +357,15 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - **Reranking:** a cross-encoder rescores the top ~50 candidates jointly with the query; slower but more precise.
 - **Evaluation:** retrieval metrics (hit-rate@k, MRR) need a labelled set of questions → expected source chunks; answer quality is checked against expected facts (by hand or with an LLM judge on Haiku).
 - **Structured + unstructured:** Cala gives verified facts (who, what, numbers, relationships); filings give context (why, risks). Good answers cite both.
+- **No default model:** every role (agent, cheap steps, judge, embeddings, reranker) gets the model that wins on *its* job, measured on quality, latency (time to first token, p50/p95) and cost. Open-source, free, cheap and frontier models are all candidates. The code depends on an `LLMClient` interface, never on one SDK, so a model change is a config change. Providers format tool use differently; normalising that in the adapter is part of the exercise.
+- **Organising for cost:** no LLM where deterministic code works; a small model by default and a stronger one only where the evals show it pays off; prompt caching; batch for anything non-interactive.
 
-**Tech:** pgvector, Postgres full-text search (`tsvector`), sentence-transformers (embedding model + cross-encoder), `claude-haiku-5-5` for judging.
+**Tech:** pgvector, Postgres full-text search (`tsvector`), embedding and rerank models chosen by evals (local sentence-transformers as the baseline), `LLMClient` interface with at least two provider adapters, LLM judge chosen by evals.
 
 **Tasks:**
+- [ ] `llm/`: `LLMClient` interface (chat, tools, streaming, structured output) with an Anthropic adapter; refactor `agent/loop.py` and `agent/graph.py` onto it; model per role in settings. Existing loop tests must pass unchanged
+- [ ] A second adapter (an OpenAI-compatible API, which also covers most open-source models, hosted or local); the same loop tests pass with it
+- [ ] Model market research: for each role (agent, cheap steps, judge, embeddings, reranker), a table of 3-5 candidates with price, latency, context window, tool-use and structured-output quality, and hosting options; saved in the Sprint 3 journal
 - [ ] Pick 10-20 companies (mix of US large caps and foreign filers with 10-K/20-F)
 - [ ] `retrieval/ingest.py`: fetch 10-K risk-factor sections via the EDGAR client; clean; chunk with section metadata
 - [ ] Embed chunks locally; store in pgvector with metadata (company, filing, section, date)
@@ -371,10 +376,12 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - [ ] `make eval`: hit-rate@5, MRR, answer correctness per version; results saved to `evals/results/`
 - [ ] Switch the `search_filings` tool to retrieval; answers cite Cala facts and filing passages
 - [ ] README table: V1 vs V2 vs V3 with numbers
+- [ ] Model comparison on the eval sets: 2-3 candidates per role (embeddings, judge, agent) on quality, latency p50/p95 and cost; the judge calibrated against ~20 hand-labelled answers before trusting it
+- [ ] ADR (next free number): model choice per role, with the comparison table, the cost per answered question, and when to revisit it
 
-**Done when:** the README shows a table comparing naive, hybrid and reranked retrieval, with numbers, and the agent's answers carry citations to both sources.
+**Done when:** the README shows a table comparing naive, hybrid and reranked retrieval, with numbers; the agent's answers carry citations to both sources; and switching the agent to another provider is a settings change that passes the loop tests.
 
-**Explain it in 2 minutes:** why hybrid beat (or didn't beat) dense on tickers and numbers; how you built the eval set; chunking decisions; cost/latency of reranking.
+**Explain it in 2 minutes:** why hybrid beat (or didn't beat) dense on tickers and numbers; how you built the eval set; chunking decisions; cost/latency of reranking; how you chose each model and what an answer costs.
 
 **Docs if stuck:** [pgvector](https://github.com/pgvector/pgvector) · [PostgreSQL full-text search](https://www.postgresql.org/docs/current/textsearch.html) · [Sentence Transformers](https://github.com/UKPLab/sentence-transformers)
 
@@ -461,7 +468,7 @@ Each sprint uses the same template: **Objective · Why it's interesting · Backg
 - **Evals as tests:** a fixed set of scenarios (questions + expected behaviour: right tool, right facts, citations present, no hallucinated numbers) run on every prompt or model change. A drop beyond a threshold fails CI.
 - **Failure analysis:** collect real failures, classify them (retrieval miss, wrong tool, bad prompt, provider error), fix the class, add a regression case.
 
-**Tech:** Langfuse (or OpenTelemetry), pytest-based eval runner, `claude-haiku-5-5` as judge, GitHub Actions.
+**Tech:** Langfuse (or OpenTelemetry), pytest-based eval runner, the judge model chosen in Sprint 3, GitHub Actions.
 
 **Tasks:**
 - [ ] Instrument the agent, tools, retrieval and voice with Langfuse traces

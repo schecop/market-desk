@@ -68,7 +68,7 @@ Boilerplate may be generated (config files, Dockerfiles, CI workflows, Terraform
 - Never commit secrets. Keys go in `.env` (gitignored); add new keys to `.env.example` with the sprint that introduced them.
 - Respect the budget (~€20-30/month, `docs/PLAN.md` section 6): Haiku for evals, small eval sets, no always-on cloud resources; the AWS stack is destroyed when not demoing.
 - Tests must never call live external APIs in CI (inject `httpx2.MockTransport`; ADR-0003).
-- Claude API models: `claude-sonnet-5-5` for the agent, `claude-haiku-5-5` for cheap steps and judging.
+- No default model: the model for each role (agent, cheap steps, judge, embeddings) is chosen from evals in Sprint 3 and lives in settings, behind the `LLMClient` interface. Until that ADR exists, the agent keeps using the Claude API as built in Sprint 2.
 
 ## On session end
 1. Tick finished checkboxes in `docs/PLAN.md`.
